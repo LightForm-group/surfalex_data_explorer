@@ -1,0 +1,10 @@
+/DIC data/Data/
+/DIC data/Results
+/EBSD data/Data
+/Forming test data/Data/
+/Forming test data/Analysis/GOM*
+*.ipynb_checkpoints*
+/Forming test data/Results/
+/Comments on Surfalex folder.txt
+/desktop.ini
+/Forming test data/Read me.pptx

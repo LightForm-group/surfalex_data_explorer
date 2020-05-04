@@ -1,0 +1,5 @@
+Step 1: Please run the matlab code ‘FLC_last_stage_before_crack.m’ provided in the analysis folder to plot the forming limit curve till the formation of crack
+
+Step 2: Please run the matlab code 'FLC_necking.m' provided in the analysis folder to plot the forming limit cruve till the onset of necking 
+
+For full details of calculation of forming limit curve, please see the 'read me.ppt' file.

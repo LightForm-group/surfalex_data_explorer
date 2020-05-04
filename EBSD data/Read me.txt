@@ -1,0 +1,14 @@
+This folder contains the EBSD data for Surfalex sample.
+
+The EBSD scans were taken on three different planes
+
+RD-TD
+TD-ND
+RD-ND
+
+The the .ctf filees for each of the surface can be found in the folder 'Data'.
+
+The Mtex script files to plot the IPF map and pole figures is provided in the folder 'Analysis'
+
+
+
