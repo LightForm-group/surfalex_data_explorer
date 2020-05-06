@@ -23,7 +23,7 @@ Each of these folders contains three sub-folders.
 
 The voltage can be converted using the following conversion 1V = 0.5 kN.
 
-The cross section area of each sample is provided below. 
+The cross section area of each sample is provided below. Sample width and thickness are given in 'mm'.
 
 sample width thickness
 0-1    5.2    1.52
@@ -42,13 +42,6 @@ sample width thickness
 Scripts to analyse thes raw data are provided in the 'Analysis' folder. 
 
 ### Analysis of displacement data
-The displacement data can be analsed using the python script provided in the 'Analysis' folder. 
-
-In order to run the script, it has to be ensured that the path for each test is specified correctly.
-
-e.g. defmap = Deformation_map('./Surfalex_All data/DIC data/Data/test 0-1/displacement data', fname)
+The displacement data can be analsed using the Python Jupyter notebook provided in the 'Analysis' folder. Further instructions are in the notebook.
 
 Once the script is excecuted, different types of plots which are shown in the powerpoint file in the 'Analysis' folder can be obtained. 
-
-### Plotting stress strain curves
-In order to plot the stress-strain curves, please run the script 'Tensile_data.m' provided in the analysis folder. 

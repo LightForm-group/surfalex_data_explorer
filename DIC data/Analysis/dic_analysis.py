@@ -2,21 +2,20 @@ from typing import List
 
 import pandas as pd
 import numpy as np
-import matplotlib
+import matplotlib.pyplot as plt
 
-class Deformation_map():
-    def __init__(self, path, fname) :
-        self.xtrim = 0
-        self.ytrim = 0
-        self.path = path
-        self.fname = fname
+
+class DeformationMap:
+    def __init__(self, file_path: str):
+        self.x_trim = 0
+        self.y_trim = 0
         
-        self.data = pd.read_csv(self.path + '/' + self.fname, skiprows=1).to_numpy()
+        self.data = pd.read_csv(file_path, skiprows=1, usecols=[0, 1, 2, 3]).to_numpy()
 
-        self.xc = self.data[:,0]
-        self.yc = self.data[:,1]
-        self.xd = self.data[:,2]
-        self.yd = self.data[:,3]
+        self.xc = self.data[:, 0]
+        self.yc = self.data[:, 1]
+        self.xd = self.data[:, 2]
+        self.yd = self.data[:, 3]
         
         binning_x = min(abs(np.diff(self.xc)))
         binning_y = max(abs(np.diff(self.yc)))
@@ -24,8 +23,8 @@ class Deformation_map():
         assert binning_x % 1 == 0
         self.binning = int(binning_x)
         
-        self.xdim = int((self.xc.max() - self.xc.min()) / binning_x) + 1
-        self.ydim = int((self.yc.max() - self.yc.min()) / binning_y) + 1
+        self.x_dim = int((self.xc.max() - self.xc.min()) / binning_x) + 1
+        self.y_dim = int((self.yc.max() - self.yc.min()) / binning_y) + 1
         
 #         self.x_map = self._map(self.xd)
 #         self.y_map = self._map(self.yd)
@@ -37,15 +36,15 @@ class Deformation_map():
         self.f12 = self._grad(self.x_map)[0]
         self.f21 = self._grad(self.y_map)[1]
         self.max_shear = np.sqrt((((self.f11-self.f22)/2.)**2) + ((self.f12+self.f21)/2.)**2)
-        self.max_shear = self.max_shear[self.ytrim:-self.ytrim,self.xtrim:-self.xtrim]
-        self.mapshape = np.shape(self.max_shear)
+        self.max_shear = self.max_shear[self.y_trim:-self.y_trim, self.x_trim:-self.x_trim]
+        self.map_shape = np.shape(self.max_shear)
         
     def _map(self, data_col):
-        data_map = np.reshape(np.array(data_col), (self.ydim, self.xdim))
+        data_map = np.reshape(np.array(data_col), (self.y_dim, self.x_dim))
         return data_map
 
     def _map_wmissing(self, data_col):
-        data_map = np.full((self.ydim, self.xdim), np.nan)
+        data_map = np.full((self.y_dim, self.x_dim), np.nan)
         
         xc = self.xc - self.xc.min()
         yc = self.yc - self.yc.min()
@@ -63,24 +62,11 @@ class Deformation_map():
         
         return data_map, locs
 
-    def _grad(self,data_map) :
+    def _grad(self, data_map):
         data_grad = np.gradient(data_map, self.binning, self.binning)
         return data_grad
-  
- 
-def scrubF(measurement: int, fig: matplotlib.pyplot.figure, f_list: List[Deformation_map]):
-    fmap1=f_list[measurement - 1]
-    fmap2=f_list[measurement]
-    fmap3=f_list[measurement + 1]
-    average_data=(fmap1.f22 + fmap2.f22 + fmap3.f22) / 3
 
-    fig.set_data(average_data)
-    plt.draw()
- 
- 
-def scrubF_single(measurement: int, fig: matplotlib.pyplot.figure, f_list: List[Deformation_map]):
-    fmap=f_list[measurement]
-    cropped_map=fmap.f22
 
-    fig.set_data(cropped_map)
-    plt.draw()
+def scrub_frames(measurement: int, f_list: List[DeformationMap]):
+    plt.imshow(f_list[measurement].f22)
+    plt.show()
