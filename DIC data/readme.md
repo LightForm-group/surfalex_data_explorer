@@ -39,9 +39,9 @@ sample width thickness
 
 ## Analysis folder
 
-Scripts to analyse thes raw data are provided in the 'Analysis' folder. 
+Scripts to analyse the raw data are provided in the 'Analysis' folder. 
 
 ### Analysis of displacement data
 The displacement data can be analsed using the Python Jupyter notebook provided in the 'Analysis' folder. Further instructions are in the notebook.
 
-Once the script is excecuted, different types of plots which are shown in the powerpoint file in the 'Analysis' folder can be obtained. 
+Once the script is excecuted, it will generate plots in the 'Analysis' folder. A LaTeX report of these plots can then obtained by compiling the document in the Analysis/report folder. 
