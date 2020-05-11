@@ -13,7 +13,8 @@ CS = {...
 
 % plotting convention
 setMTEXpref('xAxisDirection','east');
-setMTEXpref('zAxisDirection','outofplane');
+setMTEXpref('zAxisDirection','intoplane');
+
 
 %% Specify File Names
 
@@ -29,31 +30,52 @@ fname = [pname '\TD-ND Data.ctf'];
 ebsd = loadEBSD(fname,CS,'interface','ctf',...
   'convertEuler2SpatialReferenceFrame');
 
+% This section is for rotating EBSD maps. In this case, 90 degree roation is
+% performed as the ebsd scan was performed on TD-ND plane
+
 rot = rotation('axis', xvector, 'angle',90*degree);
 ebsd = rotate(ebsd, rot);
+
+% this section is for determining grains from the EBSD data
 
 ebsd = ebsd('indexed');
 [grains, ebsd.grainId] = calcGrains(ebsd,'angle',5*degree);
 grains = smooth(grains);
 
+% this section plots the Band contrast and IPFZ maps together. 
 plot(ebsd,ebsd.bc);
 colormap gray
 mtexColorbar;
-
 hold on
-
 oM = ipfHSVKey(ebsd('indexed'))
-oM.inversePoleFigureDirection = xvector;
+oM.inversePoleFigureDirection = zvector;
 color = oM.orientation2color(ebsd('indexed').orientations);
 plot(ebsd('indexed'),color);
-
 hold off
 
 figure ()
 
+
+% this section plots the standard pole figures of fcc materials.
+setMTEXpref('zAxisDirection','outofplane');
 ori=ebsd('Aluminium').orientations
 x=[Miller(1,1,1,ori.CS),Miller(2,0,0,ori.CS),Miller(2,2,0,ori.CS)]; % include hkil figures here
 plotPDF(ori,x,'antipodal','contourf','colorrange',[1 3.5])
-colorbar;
+mtexColorbar ('FontSize',25,'Fontweight','bold');
+setColorRange('equal') % set equal color range for all subplots
+% annotate([xvector, yvector], 'label', {'RD','TD'}, 'BackgroundColor', 'w',...
+%     'FitBoxToText','on','FontSize',15,'LineStyle','none','Fontname','Times New Roman','Fontweight','bold');
+
+figure ()
+
+% this section plots the standard ODF sections of fcc materials.
+ori = ebsd('Aluminium').orientations;
+ori.SS = specimenSymmetry('orthorhombic');
+odf = calcODF(ori);
+plot(odf,'phi2',[0 45 65]* degree,'antipodal','linewidth',2,'colorbar','colorrange',[1 3.5]);
+ori1 = calcOrientations(odf,2000);
+setColorRange('equal');
+mtexColorbar ('FontSize',25,'Fontweight','bold','location','south','title','mrd');
+
 
 
