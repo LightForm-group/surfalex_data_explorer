@@ -11,3 +11,11 @@
 /DIC data/Analysis/__pycache__
 /DIC data/Analysis/.idea
 /EBSD data/Results/
+*.asv
+/experimental report/experimental report.bib.*
+*.bbl
+*.blg
+*.log
+*.synctex.gz
+*.aux
+/experimental report/experimental_report.pdf
