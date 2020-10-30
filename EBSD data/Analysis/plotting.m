@@ -12,7 +12,7 @@ setMTEXpref('defaultColorMap',parula);
 %% Specify File Names
 
 file_names = ["RD-ND", "RD-TD", "TD-ND"];
-rotations = [[0, 90, 0], [0, 0, 90], [0, 90, 0]];
+rotations = [[0, -90, 0], [-90, 0, 0], [0, 90, 0]];
 
 plot_ipf = true;
 plot_pf = true;
