@@ -65,22 +65,25 @@ In the present work, an AA 6016 alloy which is denoted by the name â€˜Surfalexâ€
 The Surfalex material was provided by provided by M/s Constellium, France. The composition of the Surfalex material is provided in Table \ref{tab:compositon}. The thickness of the Surfalex sheet was \SI{1.5}{\milli\meter}. 
 
 \begin{table}[]
-\begin{tabular}{|l|l|l|l|l|l|l|l|l|}
-\hline
-Si             & Fe             & Cu             & Mn             & Mg      & Cr             & Zn             & Ti              & Al   \\ \hline
-\textless{}1.5 & \textless{}0.5 & \textless{}0.2 & \textless{}0.2 & 0.2-0.6 & \textless{}0.1 & \textless{}0.2 & \textless{}0.15 & Rest \\ \hline
-\end{tabular}
-\caption{Composition (in wt\%) of AA 6016 Surfalex material}
-\label{tab:compositon}
+	\centering
+	\begin{tabular}{|l|l|l|l|l|l|l|l|l|}
+		\hline
+		Si             & Fe             & Cu             & Mn             & Mg      & Cr             & Zn             & Ti              & Al   \\ 
+		\hline
+		\textless{}1.5 & \textless{}0.5 & \textless{}0.2 & \textless{}0.2 & 0.2-0.6 & \textless{}0.1 & \textless{}0.2 & \textless{}0.15 & Rest \\ 
+		\hline
+	\end{tabular}
+	\caption{Composition (in wt\%) of AA 6016 Surfalex material}
+	\label{tab:compositon}
 \end{table}
 
 \subsection{Tensile testing with DIC}
 Tensile testing with two-dimensional digital image correlation was performed at room temperature using an Instron universal testing machine (UTM) with \SI{5}{\kilo\newton} load cell and a Strain Master DIC system by LaVision. Images were captured for every one second (\SI{1}{\hertz}) which were then subsequently used for digital image correlation. The tensile tests were performed at a constant strain rate of \SI{5e-4}{\per\second}. The dimensions of tensile specimen are shown in Fig. \ref{fig:dic_specimens}a. It should be noted that the tensile specimens were prepared along different orientations with respect to the rolling direction to estimate the anisotropy in mechanical properties (Fig. \ref{fig:dic_specimens}b). The tensile specimens were polished followed by thorough cleaning to obtain a contamination free surface. The clean surface was then spray painted with a white primer coat followed by a top layer of black speckles to obtain the necessary contrast for image correlation. Fig. \ref{fig:dic_specimens}c shows a typical image of the speckle pattern that was used in the current work. It was ensured that the speckled surface was properly illuminated during the test to obtain a high contrast which important for subsequent processing of images.
 
 \begin{figure}[h]
-	\includegraphics{figures/dic_specimens}
+	\includegraphics[width=\textwidth]{figures/dic_specimens}
 	\centering
-	\caption{(a) Dimensions of the tensile specimen (b) Different orientation of tensile specimens with respect to rolling direction (RD) (c) Speckle pattern on the gauge length of a representative tensile
+	\caption{(a) Dimensions of the tensile specimen (b) Different orientations of tensile specimens with respect to rolling direction (RD) (c) Speckle pattern on the gauge length of a representative tensile
  sample.
 	\label{fig:dic_specimens}}
 \end{figure}
@@ -138,7 +141,7 @@ In the past, several necking criterias have been used to predict the onset of lo
 This criterion is based on abrupt change in major strain rate at a point in the neck region \cite{Song2019}. As the localised neck forms and starts to propagate, the major strain will localise within the neck. Consequently, the major strain rate will increase at a much faster rate. Therefore, the onset of necking is detected when the 2nd derivative of the major strain in the neck starts to deviate from a constant value.  However, in actual situations there is never an abrupt deviation from the constant value. Instead, there is a gradual transition. Therefore, a threshold criterion has to be used to detect the onset of necking. In the present work, a threshold of 10\% of the maximum value of 2nd derivative of the major strain was used to detect the formation of neck. The different steps of this 2nd derivative criteria are shown in Fig. 7 for a representative sample. 
 
 \subsection{Incremental strain in the neck and away from neck region}
-This criterion is based on the skeleton structure of the well-known Marciniak-Kuczynski (MK) model which is used widely for predicting forming limit curves of engineering metals and alloys \cite{Banabic2010}. The MK model assumes a defect in terms of a region of reduced thickness (Fig\ref{fig:mk_flaw}) being present in the sample. A key assumption of the MK model is that when necking occurs, the major strain increment in the neck region and away from the neck region will be greater than 10\cite{Narasimhan1991}. In this regard, the evolution of major strain rate with time was analysed for points in the neck and away from the neck region and their ratio was tracked. The time at which the ratio exceeded 10 was chosen as the onset of necking. The different steps of this necking criteria are shown in Fig. 9. An additional benefit of using this criterion is that it is consistent with our finite element simulations where MK method along with constitutive relationships and yield criterias are implemented to predict the forming limit curve of the Surfalex material.   
+This criterion is based on the skeleton structure of the well-known Marciniak-Kuczynski (MK) model which is used widely for predicting forming limit curves of engineering metals and alloys \cite{Banabic2010}. The MK model assumes a defect in terms of a region of reduced thickness (Fig \ref{fig:mk_flaw}) being present in the sample. A key assumption of the MK model is that when necking occurs, the major strain increment in the neck region and away from the neck region will be greater than 10\cite{Narasimhan1991}. In this regard, the evolution of major strain rate with time was analysed for points in the neck and away from the neck region and their ratio was tracked. The time at which the ratio exceeded 10 was chosen as the onset of necking. The different steps of this necking criteria are shown in Fig. 9. An additional benefit of using this criterion is that it is consistent with our finite element simulations where MK method along with constitutive relationships and yield criterias are implemented to predict the forming limit curve of the Surfalex material.   
 
 \begin{figure}[h]
 	\includegraphics[width=\textwidth]{figures/mk_flaw}

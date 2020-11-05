@@ -19,3 +19,4 @@
 *.synctex.gz
 *.aux
 /experimental report/experimental_report.pdf
+/experimental report/plots/.idea
