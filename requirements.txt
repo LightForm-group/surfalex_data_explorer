@@ -1,0 +1,8 @@
+pandas
+matplotlib
+numpy
+tqdm
+ipywidgets
+jupyter
+scipy
+lmfit
