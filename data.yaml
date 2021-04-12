@@ -1,3 +1,6 @@
 tensile_tests:
     url: https://sandbox.zenodo.org/record/779690/files/tensile_tests.zip
     md5: 26a03e24dcf4d055e0e9e79e0937036c 
+nakazima_tests:
+    url: https://sandbox.zenodo.org/record/783015/files/nakazima.zip
+    md5: da2ff4f24f3d67ae239d49e1e1c558d2 
