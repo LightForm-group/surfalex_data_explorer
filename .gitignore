@@ -20,3 +20,7 @@
 *.aux
 /experimental report/experimental_report.pdf
 /experimental report/plots/.idea
+/.idea
+/venv
+data/
+results/
