@@ -10,4 +10,4 @@ To run the notebooks, clone this repository, then activate a new Python 3 virtua
 
 activate this environment and then install the required pacakges using:
 
-`python -m pip install-r requirements.txt`
+`python -m pip install -r requirements.txt`
