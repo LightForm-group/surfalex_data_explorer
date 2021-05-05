@@ -1,7 +1,26 @@
-% EBSD figures for Surfalex material using MTEX
+% Before begining analysis change the working directory to the EBSD folder
+% of the surfalex_data_explorer.
 
-clear
+% Check if there is a data folder
+if ~exist('./data', 'dir')
+    mkdir('data')
+end
 
+% Check if there is a results folder
+if ~exist('./results', 'dir')
+    mkdir('results')
+end
+
+% Check if there is already data and download it if not
+if ~exist("data/ebsd_maps.zip", 'file')
+    urlwrite("https://sandbox.zenodo.org/record/811311/files/ebsd.zip", "data/ebsd_maps.zip")
+end
+
+% unzip data files.
+filenames = unzip("data/ebsd_maps.zip", "data");
+fprintf("\nData sucessfully downloaded and unzipped\n")
+
+%% EBSD figures for Surfalex material using MTEX
 % Specify Crystal Symmetries
 
 CS = {... 
@@ -29,7 +48,7 @@ setMTEXpref('innerPlotSpacing', 20)
 
 for file_number = 1:length(file_names)
     % create an EBSD variable containing the data
-    fname = sprintf('EBSD Data/Data/%1$s plane/%1$s Data.ctf', file_names(file_number));
+    fname = sprintf("./data/%s.ctf", file_names(file_number));
     ebsd = EBSD.load(fname, CS, 'interface', 'ctf', 'convertEuler2SpatialReferenceFrame');
 
     % Rotate the map. Rotation angle depends on which plane is being considered
@@ -58,7 +77,7 @@ for file_number = 1:length(file_names)
         color = oM.orientation2color(ebsd('indexed').orientations);
         plot(ebsd('indexed'),color);
         hold off
-        file_name = sprintf('EBSD data/Results/%s_IPFZ.png', file_names(file_number));
+        file_name = sprintf('./results/%s_IPFZ.png', file_names(file_number));
         saveas(gcf, file_name)
         if show_figures == false
             close(gcf)
@@ -96,7 +115,7 @@ for file_number = 1:length(file_names)
         f.children(2).Title.Position=[1, 1.25, 1];
         f.children(3).Title.Position=[1, 1.25, 1];
 
-        file_name = sprintf('EBSD data/Results/%s_pole_figure.png', file_names(file_number));
+        file_name = sprintf('./results/%s_pole_figure.png', file_names(file_number));
         saveas(gcf, file_name)
         if show_figures == false
             close(gcf)
@@ -112,7 +131,7 @@ for file_number = 1:length(file_names)
         ori1 = calcOrientations(odf, 2000);
         setColorRange('equal');
         mtexColorbar ('FontSize', 25, 'Fontweight', 'bold', 'location', 'south', 'title', 'mrd');
-        file_name = sprintf('EBSD data/Results/%s_odf.png', file_names(file_number));
+        file_name = sprintf('./results/%s_odf.png', file_names(file_number));
         saveas(gcf, file_name)
         if show_figures == false
             close(gcf)
