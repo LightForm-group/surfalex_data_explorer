@@ -31,6 +31,7 @@ setMTEXpref('defaultColorMap',parula);
 %% Specify File Names
 
 file_names = ["RD-ND", "RD-TD", "TD-ND"];
+pf_xy_labels = ["RD", "ND"; "RD", "TD"; "TD", "ND"];
 rotations = [[0, -90, 0], [-90, 0, 0], [0, 90, 0]];
 
 plot_ipf = true;
@@ -40,11 +41,13 @@ show_figures = false;
 
 %% Set figure preferences
 
-setMTEXpref('FontSize', 30);
+setMTEXpref('FontSize', 20);
 setMTEXpref('FontName', 'SansSerif')
-setMTEXpref('figSize', 'large');
-setMTEXpref('outerPlotSpacing', 40);
+setMTEXpref('figSize', 'small');
+setMTEXpref('outerPlotSpacing', 60);
 setMTEXpref('innerPlotSpacing', 20)
+
+PF_cbar_limits_global = [0.2 3.9];
 
 for file_number = 1:length(file_names)
     % create an EBSD variable containing the data
@@ -94,31 +97,49 @@ for file_number = 1:length(file_names)
         figure();
         ori = ebsd('Aluminium').orientations;
         x = [Miller(1, 0, 0, ori.CS), Miller(1, 1, 0, ori.CS), Miller(1, 1, 1, ori.CS)];
-        plotPDF(ori, x, 'antipodal', 'contourf', 'minmax')
-        mtexColorbar('FontSize', 25, 'Fontweight', 'bold');
 
-        % set equal color range for all subplots
-        setColorRange('equal')
-        mtexColorbar ('location','southOutSide','title','mrd');
+        plotPDF(ori, x, 'antipodal', 'contourf', 'earea', 'LineWidth', 0.3);
 
         % Turn off x and y labels on figures.
         pfAnnotations = @(varargin) [];
         setMTEXpref('pfAnnotations', pfAnnotations);
 
-        % moving the vector3d axis labels outside of the hemisphere boundary
-        text(vector3d.X,'RD','VerticalAlignment','bottom');
-        text(vector3d.Y,'TD','HorizontalAlignment','left');
+        f = gcm;
+        setColorRange('equal'); % Use the same colour range for all sub-figures:
+        mtexColorbar();
+        f.colorbar; % Turn off colour bar
+        caxis(PF_cbar_limits_global);
+                    
+        % RD/TD/ND labels:
+        text(0, 1.6, 0, char(pf_xy_labels(file_number, 1)),'HorizontalAlignment','center','fontSize',22);
+        text(1.5, 0, 0, char(pf_xy_labels(file_number, 2)),'VerticalAlignment','middle','fontSize',22);
 
         % moving the hkil labels to make room for the rolling direction labels
-        f = gcm; 
         f.children(1).Title.Position=[1, 1.25, 1];
         f.children(2).Title.Position=[1, 1.25, 1];
         f.children(3).Title.Position=[1, 1.25, 1];
 
-        file_name = sprintf('./results/%s_pole_figure.png', file_names(file_number));
-        saveas(gcf, file_name)
+        file_name = sprintf('./results/pole_figure_%s.pdf', file_names(file_number));
+        exportgraphics(gcf,file_name,'ContentType','vector');
         if show_figures == false
             close(gcf)
+        end
+        
+        % Generate a separate colour bar:
+        if file_number == 1
+            figure();
+            axis off;
+            cb = colorbar();
+            caxis(PF_cbar_limits_global);
+            cb.FontSize = 15;
+            cb.Location = 'south';
+            cb.Ruler.TickLabelFormat = '%.1f';        
+            set(get(cb, 'Title'),'String','MRD');
+            file_name = sprintf('./results/pole_figure_cbar.pdf');
+            exportgraphics(gcf,file_name,'ContentType','vector');
+            if show_figures == false
+                close(gcf)
+            end
         end
     end
     %% Plot the ODF sections
