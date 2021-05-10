@@ -1,3 +1,5 @@
+% Run on Matlab R2020a with MTEX 5.7.
+
 % Before begining analysis change the working directory to the EBSD folder
 % of the surfalex_data_explorer.
 
@@ -34,6 +36,9 @@ file_names = ["RD-ND", "RD-TD", "TD-ND"];
 pf_xy_labels = ["RD", "ND"; "RD", "TD"; "TD", "ND"];
 rotations = [[0, -90, 0], [-90, 0, 0], [0, 90, 0]];
 
+MAP_X_DIMS = [5600 6713 5045];
+MAP_PATCH_MARGIN_Y = [70 70 170];
+
 plot_ipf = true;
 plot_pf = true;
 plot_odf = true;
@@ -62,29 +67,86 @@ for file_number = 1:length(file_names)
 
     %% Plot the Band contrast and IPFZ maps together.
     if plot_ipf == true
+        
+        setMTEXpref('FontSize', 10);
+        
         % Calculate grains from map
         ebsd = ebsd('indexed');
         [grains, ebsd.grainId] = calcGrains(ebsd, 'angle', 5 * degree);
         grains = smooth(grains);
 
-        % Plotting convention for ipf map
+        % Plotting convention for IPF map
         setMTEXpref('xAxisDirection','east');
         setMTEXpref('zAxisDirection','intoplane');
 
+        % Plot band contrast to show grain morphology:
         fig = figure();
-        plot(ebsd, ebsd.bc);
+        [~,mP] = plot(ebsd, ebsd.bc);
+        mP.micronBar.length = map_scale_bar_lengths(file_number);
         colormap gray
-        hold on
-        oM = ipfHSVKey(ebsd('indexed'));
-        oM.inversePoleFigureDirection = zvector;
-        color = oM.orientation2color(ebsd('indexed').orientations);
-        plot(ebsd('indexed'),color);
-        hold off
-        file_name = sprintf('./results/%s_IPFZ.png', file_names(file_number));
-        saveas(gcf, file_name)
+        file_name = sprintf('./results/band_contrast_%s.png', file_names(file_number));
+        exportgraphics(gcf,file_name);        
         if show_figures == false
             close(gcf)
         end
+                
+        % Plot IPF map:               
+        oM = ipfHSVKey(ebsd('indexed'));
+        oM.inversePoleFigureDirection = zvector;
+        color = oM.orientation2color(ebsd('indexed').orientations);
+        fig = figure();
+        [h,mP] = plot(ebsd('indexed'),color);        
+        mP.parent = fig;
+        mP.micronBar.length = 750;        
+                
+        % Add RD/TD/ND label as a patch:
+        patch_width = 750 * MAP_X_DIMS(file_number) / MAP_X_DIMS(1);
+        patch_x_margin = 70 * MAP_X_DIMS(file_number) / MAP_X_DIMS(1);
+        patch_y_margin = MAP_PATCH_MARGIN_Y(file_number);
+        patch_height = 270 * MAP_X_DIMS(file_number) / MAP_X_DIMS(1);                
+        dir_patch = patch([MAP_X_DIMS(file_number) - patch_x_margin  - patch_width...
+                MAP_X_DIMS(file_number) - patch_x_margin ...
+                MAP_X_DIMS(file_number) - patch_x_margin ...
+                MAP_X_DIMS(file_number) - patch_x_margin  - patch_width...
+            ],...
+            [patch_y_margin patch_y_margin...
+            patch_y_margin + patch_height...
+            patch_y_margin + patch_height],...
+            'y');                        
+        txt_y_pos = (patch_y_margin + (patch_height / 2)) * 0.93;
+        text(MAP_X_DIMS(file_number) - patch_x_margin - (patch_width / 2),...
+            txt_y_pos,...
+            file_names(file_number),...
+            'HorizontalAlignment', 'center',...
+            'VerticalAlignment', 'middle',...
+            'color', 'w',...
+            'fontSize', 12);                
+        set(dir_patch, 'FaceColor', 'k', 'EdgeColor', 'none', ...
+            'LineWidth', 1, 'FaceAlpha', 0.6);        
+        
+        set(gcf,'Position',[100 100 800 800])
+        mP.ax.Units = 'centimeter';
+        mP.ax.Position(3) = 12;
+        
+        file_name = sprintf('./results/IPFZ_%s.png', file_names(file_number));        
+        exportgraphics(gcf,file_name,'Resolution',300);
+
+        if show_figures == false
+            close(gcf)
+        end   
+        
+        if file_number == 1
+            % Plot the IPF colour key:
+            setMTEXpref('FontSize', 25);
+            fig = figure();
+            plot(oM);
+            file_name = './results/IPFZ_colour_key.png';
+            exportgraphics(gcf,file_name);
+            if show_figures == false
+                close(gcf)
+            end
+        end
+        setMTEXpref('FontSize', 20);        
     end
     
     %% Plots the pole figures
