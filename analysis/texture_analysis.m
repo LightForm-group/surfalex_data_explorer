@@ -1,25 +1,30 @@
 % Run on Matlab R2020a with MTEX 5.7.
 
-% Before begining analysis change the working directory to the EBSD folder
-% of the surfalex_data_explorer.
+% Before begining analysis change the working directory to the "analysis"
+% folder of the surfalex_data_explorer.
+
+data_dir = '../data/texture_analysis';
+results_dir = '../results/';
+zip_path = [data_dir '/ebsd_maps.zip'];
+zenodo_URL = "https://sandbox.zenodo.org/record/811311/files/ebsd.zip";
 
 % Check if there is a data folder
-if ~exist('./data', 'dir')
-    mkdir('data')
+if ~exist(data_dir, 'dir')
+    mkdir(data_dir)
 end
 
 % Check if there is a results folder
-if ~exist('./results', 'dir')
-    mkdir('results')
+if ~exist(results_dir , 'dir')
+    mkdir(results_dir )
 end
 
 % Check if there is already data and download it if not
-if ~exist("data/ebsd_maps.zip", 'file')
-    urlwrite("https://sandbox.zenodo.org/record/811311/files/ebsd.zip", "data/ebsd_maps.zip")
+if ~exist(zip_path, 'file')
+    urlwrite(zenodo_URL, zip_path);
 end
 
 % unzip data files.
-filenames = unzip("data/ebsd_maps.zip", "data");
+filenames = unzip(zip_path, data_dir);
 fprintf("\nData sucessfully downloaded and unzipped\n")
 
 %% EBSD figures for Surfalex material using MTEX
@@ -55,8 +60,8 @@ setMTEXpref('innerPlotSpacing', 20)
 PF_cbar_limits_global = [0.2 3.9];
 
 for file_number = 1:length(file_names)
-    % create an EBSD variable containing the data
-    fname = sprintf("./data/%s.ctf", file_names(file_number));
+    % create an EBSD variable containing the data    
+    fname = sprintf("%s/%s.ctf", data_dir, file_names(file_number));
     ebsd = EBSD.load(fname, CS, 'interface', 'ctf', 'convertEuler2SpatialReferenceFrame');
 
     % Rotate the map. Rotation angle depends on which plane is being considered
@@ -80,11 +85,11 @@ for file_number = 1:length(file_names)
         setMTEXpref('zAxisDirection','intoplane');
 
         % Plot band contrast to show grain morphology:
-        fig = figure();
+        figure();
         [~,mP] = plot(ebsd, ebsd.bc);
-        mP.micronBar.length = map_scale_bar_lengths(file_number);
+        mP.micronBar.length = 750;
         colormap gray
-        file_name = sprintf('./results/band_contrast_%s.png', file_names(file_number));
+        file_name = sprintf('%s/band_contrast_%s.png', results_dir, file_names(file_number));
         exportgraphics(gcf,file_name);        
         if show_figures == false
             close(gcf)
@@ -128,7 +133,7 @@ for file_number = 1:length(file_names)
         mP.ax.Units = 'centimeter';
         mP.ax.Position(3) = 12;
         
-        file_name = sprintf('./results/IPFZ_%s.png', file_names(file_number));        
+        file_name = sprintf('%s/IPFZ_%s.png', results_dir, file_names(file_number));        
         exportgraphics(gcf,file_name,'Resolution',300);
 
         if show_figures == false
@@ -140,7 +145,7 @@ for file_number = 1:length(file_names)
             setMTEXpref('FontSize', 25);
             fig = figure();
             plot(oM);
-            file_name = './results/IPFZ_colour_key.png';
+            file_name = [results_dir '/IPFZ_colour_key.png'];
             exportgraphics(gcf,file_name);
             if show_figures == false
                 close(gcf)
@@ -181,7 +186,7 @@ for file_number = 1:length(file_names)
         f.children(2).Title.Position=[1, 1.25, 1];
         f.children(3).Title.Position=[1, 1.25, 1];
 
-        file_name = sprintf('./results/pole_figure_%s.pdf', file_names(file_number));
+        file_name = sprintf('%s/pole_figure_%s.pdf', results_dir, file_names(file_number));
         exportgraphics(gcf,file_name,'ContentType','vector');
         if show_figures == false
             close(gcf)
@@ -197,7 +202,7 @@ for file_number = 1:length(file_names)
             cb.Location = 'south';
             cb.Ruler.TickLabelFormat = '%.1f';        
             set(get(cb, 'Title'),'String','MRD');
-            file_name = sprintf('./results/pole_figure_cbar.pdf');
+            file_name = sprintf('%s/pole_figure_cbar.pdf', results_dir);
             exportgraphics(gcf,file_name,'ContentType','vector');
             if show_figures == false
                 close(gcf)
@@ -214,7 +219,7 @@ for file_number = 1:length(file_names)
         ori1 = calcOrientations(odf, 2000);
         setColorRange('equal');
         mtexColorbar ('FontSize', 25, 'Fontweight', 'bold', 'location', 'south', 'title', 'mrd');
-        file_name = sprintf('./results/%s_odf.png', file_names(file_number));
+        file_name = sprintf('%s/ODF_%s.png', results_dir, file_names(file_number));
         saveas(gcf, file_name)
         if show_figures == false
             close(gcf)
