@@ -22,7 +22,8 @@
 /experimental report/plots/.idea
 /.idea
 /venv
-data/
+data/*
+!data/zenodo_URLs.yaml
 results/
 /Modelling/generated_figures
 /Modelling/generated_plastic_tables
