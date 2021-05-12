@@ -404,3 +404,79 @@ def show_FLC(FLC):
         },
     )
     return fig_wig
+
+def plot_FLD_full(simulated_FLC, necking_strains, fracture_strains, constellium_data):
+    FLD_full_fig = graph_objects.FigureWidget(
+        data=[
+            {
+                'x': fracture_strains[:, 0],
+                'y': fracture_strains[:, 1],
+                'name': 'Frac. strain       ', # (spaces for legend padding!)
+                'mode': 'markers',
+                'marker': {
+                    'symbol': 'circle-open',
+                },            
+            },
+            {
+                'x': necking_strains[:, 0],
+                'y': necking_strains[:, 1],
+                'name': 'Neck. strain',
+                'mode': 'markers',
+                'marker': {
+                    'symbol': 'cross',
+                },
+            },
+            {
+                'x': simulated_FLC['forming_limits'][0],
+                'y': simulated_FLC['forming_limits'][1],
+                'mode': 'markers+lines',
+                'name': 'Simulated',
+                'line': {
+                    'width': 0.5,
+                }
+            },           
+            {
+                'x': constellium_data[:, 0],
+                'y': constellium_data[:, 1],
+                'name': '*Surf.',
+            },     
+            {
+                'x': constellium_data[:, 2],
+                'y': constellium_data[:, 3],
+                'name': '*Surf. HF',
+            },
+        ],
+        layout={
+            'width': 350,
+            'height': 350,
+            'margin': {'t': 20, 'b': 20, 'l': 20, 'r': 20},
+            'template': 'simple_white',
+            'xaxis': {
+                'title': 'Minor strain',
+                'mirror': 'ticks',
+                'ticks': 'inside',
+                'dtick': 0.1,
+                'tickformat': '.1f',
+                'showgrid': True,
+            },
+            'yaxis': {
+                'range': [0.09, 0.59],
+                'scaleanchor': 'x',
+                'title': 'Major strain',
+                'mirror': 'ticks',
+                'ticks': 'inside',  
+                'dtick': 0.1,
+                'tickformat': '.1f',    
+                'showgrid': True,
+            },
+            'legend': {
+                'x': 0.98,
+                'y': 0.98,            
+                'xanchor': 'right',
+                'yanchor': 'top',
+                'tracegroupgap': 0,
+                'bgcolor': 'rgb(250, 250, 250)',
+            },        
+        }
+    )
+    return FLD_full_fig
