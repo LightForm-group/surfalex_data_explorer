@@ -12,7 +12,7 @@ To run the Jupyter notebooks, clone this repository, then activate a new Python 
 
 `python -m venv venv`
 
-activate this environment and then install the required packages using:
+Activate this environment and then install the required packages using:
 
 `python -m pip install -r requirements.txt`
 
