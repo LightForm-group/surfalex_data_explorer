@@ -1,32 +1,15 @@
-/DIC data/Data/
-/DIC data/Results
-/EBSD data/Data
-/Forming test data/Data/
-/Forming test data/Analysis/GOM*
 *.ipynb_checkpoints*
-/Forming test data/Results/
-/Comments on Surfalex folder.txt
-/desktop.ini
-/Forming test data/Read me.pptx
-/DIC data/Analysis/__pycache__
-/DIC data/Analysis/.idea
-/EBSD data/Results/
 *.asv
-/experimental report/experimental report.bib.*
 *.bbl
 *.blg
 *.log
 *.synctex.gz
 *.aux
-/experimental report/experimental_report.pdf
-/experimental report/plots/.idea
+*.pyc
+/desktop.ini
 /.idea
+/.vscode
 /venv
 data/*
 !data/zenodo_URLs.yaml
 results/
-/Modelling/generated_figures
-/Modelling/generated_plastic_tables
-/Modelling/workflows
-.vscode
-*.pyc
