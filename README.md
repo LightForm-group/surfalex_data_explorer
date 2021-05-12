@@ -2,7 +2,7 @@
 
 This repository contains interactive analysis to supplement our manuscript : '***A novel integrated framework for reproducible formability predictions using virtual materials testing***', *A. J. Plowman, P. Jedrasiak, T. Jailin, P. Crowther, S. Mishra, P. Shanthraj, J. Quinta da Fonseca*, in preparation.
 
-The manuscript describes the development of a new computational framework for formability studies, [MatFlow](https://doi.org/10.5281/zenodo.3860533). We apply this framework to study the formability of the Surfalex HF (AA6016A) alloy.
+The manuscript describes the development of a new computational framework for formability studies, [MatFlow](https://github.com/LightForm-group/matflow). We apply this framework to study the formability of the Surfalex HF (AA6016A) alloy.
 
 In this repository, we include Jupyter notebooks that can be used to interactively explore the experimental data. Data and analysis from the DIC, EBSD, and forming limit experiments can be examined. We also include a Jupyter notebook to explore the five MatFlow workflows that we developed in support of this work.
 
