@@ -28,3 +28,4 @@ results/
 /Modelling/generated_plastic_tables
 /Modelling/workflows
 .vscode
+*.pyc
