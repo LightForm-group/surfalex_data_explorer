@@ -24,3 +24,6 @@
 /venv
 data/
 results/
+/Modelling/generated_figures
+/Modelling/generated_plastic_tables
+.vscode
