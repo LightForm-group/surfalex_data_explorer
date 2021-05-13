@@ -26,12 +26,9 @@ def get_color(name: str, sample_names: List[str], normed: bool=True) -> tuple:
     return rgb_color_tuple
 
 
-def get_file_from_url(data_folder, url, name, md5=None, unzip=False):
+def get_file_from_url(data_folder: str, url: str, name: str, md5: str = None) -> pathlib.Path:
     """Download a file from a URL if it is not already present in `data_folder`. Return
-    the local path to the downloaded file. If `unzip=True`, the file is assumed to be a
-    zip folder, which will then be extracted to the `data_folder`. In this case, the
-    `data_folder` path is returned.
-
+    the local path to the downloaded file.
     """
     data_folder = pathlib.Path(data_folder)
     if not data_folder.is_dir():
@@ -42,22 +39,23 @@ def get_file_from_url(data_folder, url, name, md5=None, unzip=False):
         tqdm_description = f"Downloading file \"{name}\""
         with tqdm.tqdm(desc=tqdm_description, unit="bytes", unit_scale=True) as t:
             urllib.request.urlretrieve(url, dest_path, reporthook=tqdm_hook(t))
-        if md5:
-            if not validate_checksum(dest_path, md5):
-                raise AssertionError('MD5 does not match: workflow file is corrupt. '
-                                     'Delete workflow file and retry download.')
-            else:
-                print("MD5 validated. Download complete.")
-        if unzip:
-            print('Unzipping...', end='')
-            with zipfile.ZipFile(dest_path, 'r') as zip_ref:
-                zip_ref.extractall(data_folder)
-            print('complete.')
 
-    if unzip:
-        out_path = data_folder
+    if md5:
+        if not validate_checksum(dest_path, md5):
+            raise AssertionError('MD5 does not match: workflow file is corrupt. '
+                                 'Delete workflow file and retry download.')
+        else:
+            print("MD5 validated. Download complete.")
 
     return out_path
+
+
+def unzip_file(file_path: str, destination_path: str):
+    """Unzip the file at `file_path` to a folder at `destination_path`."""
+    print('Unzipping...', end='')
+    with zipfile.ZipFile(file_path, 'r') as zip_ref:
+        zip_ref.extractall(destination_path)
+    print('complete.')
 
 
 def tqdm_hook(t: tqdm.tqdm):
