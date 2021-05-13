@@ -421,11 +421,32 @@ def plot_FLD_full(simulated_FLC, necking_strains, fracture_strains, constellium_
     FLD_full_fig = graph_objects.FigureWidget(
         data=[
             {
+                'x': constellium_data[:, 0],
+                'y': constellium_data[:, 1],
+                'name': '*Surf.',
+                'mode': 'lines',  
+                'line': {
+                    'width': 1.5,
+                    'color': qualitative.D3[3],                     
+                },                
+            },     
+            {
+                'x': constellium_data[:, 2],
+                'y': constellium_data[:, 3],
+                'name': '*Surf. HF',
+                'mode': 'lines',
+                'line': {
+                    'width': 1.5,
+                    'color': qualitative.D3[2],    
+                },                
+            },            
+            {
                 'x': fracture_strains[:, 0],
                 'y': fracture_strains[:, 1],
                 'name': 'Frac. strain       ', # (spaces for legend padding!)
                 'mode': 'markers',
                 'marker': {
+                    'size': 8,
                     'symbol': 'circle-open',
                     'color': qualitative.D3[0],
                 },            
@@ -436,6 +457,7 @@ def plot_FLD_full(simulated_FLC, necking_strains, fracture_strains, constellium_
                 'name': 'Neck. strain',
                 'mode': 'markers',
                 'marker': {
+                    'size': 8,
                     'symbol': 'cross',
                     'color': qualitative.D3[1],
                 },
@@ -445,37 +467,15 @@ def plot_FLD_full(simulated_FLC, necking_strains, fracture_strains, constellium_
                 'y': simulated_FLC['forming_limits'][1],
                 'mode': 'markers+lines',
                 'name': 'Simulated',
+                'marker': {
+                    'size': 7,
+                },
                 'line': {
-                    'width': 0.5,
-                    'color': qualitative.D3[2],
+                    'width': 1.2,
+                    'color': qualitative.D3[4],
                 },
             },           
-            {
-                'x': constellium_data[:, 0],
-                'y': constellium_data[:, 1],
-                'name': '*Surf.',
-                'mode': 'markers+lines',
-                'marker': {
-                    'size': 3,
-                },                
-                'line': {
-                    'width': 0.7,
-                    'color': qualitative.D3[3],    
-                },                
-            },     
-            {
-                'x': constellium_data[:, 2],
-                'y': constellium_data[:, 3],
-                'name': '*Surf. HF',
-                'mode': 'markers+lines',
-                'marker': {
-                    'size': 3,
-                },
-                'line': {
-                    'width': 0.7,
-                    'color': qualitative.D3[4],    
-                },                
-            },
+
         ],
         layout={
             'width': 350,
