@@ -2,16 +2,28 @@ import hashlib
 import pathlib
 import urllib.request
 import zipfile
+from typing import List
 
 import numpy as np
 import tqdm
 import yaml
 import pandas as pd
 from plotly import graph_objects
-from plotly.colors import DEFAULT_PLOTLY_COLORS
+from plotly.colors import DEFAULT_PLOTLY_COLORS, qualitative, convert_colors_to_same_type
 from ipywidgets import widgets
 from IPython.display import display
 from formable.yielding import YieldFunction
+
+def get_color(name: str, sample_names: List[str], normed: bool=True) -> tuple:
+    """Returns a RGB tuple for the dataset based on its label, using a qualitative color scale.""" 
+    index = sample_names.index(name.split("_")[0])
+    rgb_color_str = convert_colors_to_same_type(qualitative.D3[index])[0][0]
+    rgb_color_tuple = tuple([
+        (int(i) / (255 if normed else 1))
+        for i in rgb_color_str.split('(')[1].split(')')[0].split(',')
+    ])
+        
+    return rgb_color_tuple
 
 
 def get_file_from_url(data_folder, url, name, md5=None, unzip=False):
@@ -480,3 +492,116 @@ def plot_FLD_full(simulated_FLC, necking_strains, fracture_strains, constellium_
         }
     )
     return FLD_full_fig
+
+def plot_strain_paths_to_necking_plotly(strain_at_necking, sample_sizes):
+    plt_data = []
+    for exp_name, strain in strain_at_necking.items():
+        color_idx = sample_sizes.index(exp_name.split("_")[0])
+        color = qualitative.D3[color_idx]
+        plt_data.append({
+            'x': strain[:, 0],
+            'y': strain[:, 1],
+            'name': exp_name,
+            'mode': 'lines',
+            'line': {
+                'width': 1.2,
+                'color': color,
+                'dash': ('solid', 'dash', 'dot')[int(exp_name.split("_")[1]) - 1],
+            },
+            'showlegend': False,
+            'legendgroup': exp_name.split("_")[0],
+
+        })
+        plt_data.append({
+            'x': [strain[-1, 0]],
+            'y': [strain[-1, 1]],
+            'name': exp_name,
+            'legendgroup': exp_name.split("_")[0],
+            'mode': 'markers',
+            'marker': {
+                'size': 10,
+                'color': color,
+            },
+            'showlegend': False,
+        })
+    annots = [
+        {
+            'x': -0.065,
+            'y': 0.125,
+            'text': r'\formLimsSubRefA{}',
+            'showarrow': False,
+            'font': {
+                'size': 4,
+            },
+        },  
+        {
+            'x': -0.065,
+            'y': 0.29,
+            'text': r'\formLimsSubRefB{}',
+            'showarrow': False,
+            'font': {
+                'size': 4,
+            },
+        },
+        {
+            'x': -0.045,
+            'y': 0.29,
+            'text': r'\formLimsSubRefC{}',
+            'showarrow': False,
+            'font': {
+                'size': 4,
+            },
+        },
+        {
+            'x': -0.018,
+            'y': 0.29,
+            'text': r'\formLimsSubRefD{}',
+            'showarrow': False,
+            'font': {
+                'size': 4,
+            },
+        },                            
+        {
+            'x': 0.018,
+            'y': 0.29,
+            'text': r'\formLimsSubRefE{}',
+            'showarrow': False,
+            'font': {
+                'size': 4,
+            },
+        },
+        {
+            'x': 0.09,
+            'y': 0.29,
+            'text': r'\formLimsSubRefF{}',
+            'showarrow': False,
+            'font': {
+                'size': 4,
+            },            
+        },        
+    ]
+    fig = graph_objects.FigureWidget(
+        data=plt_data,
+        layout={
+            'width':350,
+            'height': 310,
+            'margin': {'t': 20, 'b': 20, 'l': 20, 'r': 20},
+            'template': 'simple_white',
+            'xaxis': {
+                'range': [-0.08, 0.105],
+                'title': 'Minor strain',
+                'mirror': 'ticks',
+                'ticks': 'inside',                
+                'tickformat': '.2f',                                
+            },
+            'yaxis': {
+                'range': [0.0, 0.32],
+                'title': 'Major strain',
+                'mirror': 'ticks',
+                'ticks': 'inside',  
+                'tickformat': '.2f',
+            },
+            'annotations': annots,
+        },
+    )
+    return fig
