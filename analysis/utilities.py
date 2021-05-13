@@ -427,6 +427,7 @@ def plot_FLD_full(simulated_FLC, necking_strains, fracture_strains, constellium_
                 'mode': 'markers',
                 'marker': {
                     'symbol': 'circle-open',
+                    'color': qualitative.D3[0],
                 },            
             },
             {
@@ -436,6 +437,7 @@ def plot_FLD_full(simulated_FLC, necking_strains, fracture_strains, constellium_
                 'mode': 'markers',
                 'marker': {
                     'symbol': 'cross',
+                    'color': qualitative.D3[1],
                 },
             },
             {
@@ -445,17 +447,34 @@ def plot_FLD_full(simulated_FLC, necking_strains, fracture_strains, constellium_
                 'name': 'Simulated',
                 'line': {
                     'width': 0.5,
-                }
+                    'color': qualitative.D3[2],
+                },
             },           
             {
                 'x': constellium_data[:, 0],
                 'y': constellium_data[:, 1],
                 'name': '*Surf.',
+                'mode': 'markers+lines',
+                'marker': {
+                    'size': 3,
+                },                
+                'line': {
+                    'width': 0.7,
+                    'color': qualitative.D3[3],    
+                },                
             },     
             {
                 'x': constellium_data[:, 2],
                 'y': constellium_data[:, 3],
                 'name': '*Surf. HF',
+                'mode': 'markers+lines',
+                'marker': {
+                    'size': 3,
+                },
+                'line': {
+                    'width': 0.7,
+                    'color': qualitative.D3[4],    
+                },                
             },
         ],
         layout={
