@@ -11,3 +11,4 @@ psutil~=5.8.0 # for plotly image export
 kaleido~=0.2.1 # for plotly image export
 matflow==0.2.20
 formable==0.1.17
+statsmodels~=0.12.2

@@ -13,6 +13,7 @@ from plotly.colors import DEFAULT_PLOTLY_COLORS, qualitative, convert_colors_to_
 from ipywidgets import widgets
 from IPython.display import display
 from formable.yielding import YieldFunction
+from statsmodels.nonparametric.smoothers_lowess import lowess
 
 
 def get_color(name: str, sample_names: List[str], normed: bool = True) -> tuple:
@@ -309,19 +310,122 @@ def collect_hardening_data(sim_tasks, yield_stress):
 
     hardening_data = {k: None for k in strain_paths}
     for strain_path, sim_task in sim_tasks.items():
-        strain = sim_task.elements[0].outputs.volume_element_response['vol_avg_equivalent_plastic_strain']['data']
-        stress = sim_task.elements[0].outputs.volume_element_response['vol_avg_equivalent_stress']['data']
+
+        vol_elem_response = sim_task.elements[0].outputs.volume_element_response
+        total_strain = vol_elem_response['vol_avg_equivalent_strain']['data']
+        plastic_strain = vol_elem_response['vol_avg_equivalent_plastic_strain']['data']
+        stress = vol_elem_response['vol_avg_equivalent_stress']['data']
+
+        # Smooth oscillations in stress for higher strains:
+        smooth_idx = np.where(total_strain > 0.15)[0][0]
+        lowess_out = lowess(stress, total_strain, is_sorted=True,
+                            frac=0.025, it=0, return_sorted=False)
+        stress_smooth = np.concatenate((
+            stress[:smooth_idx],
+            lowess_out[smooth_idx:]
+        ))
+        work_hardening_rate = np.gradient(stress_smooth, plastic_strain)
+        # Skip transition point to smoothed data:
+        work_hardening_rate = np.concatenate((
+            work_hardening_rate[:(smooth_idx - 1)],
+            work_hardening_rate[(smooth_idx + 1):],
+        ))
+
         hardening_data[strain_path] = {
-            'strain': strain,
+            'yield_stress': yield_stress,
+            'total_strain': total_strain,
+            'plastic_strain': plastic_strain,
             'stress': stress,
+            'stress_smooth': stress_smooth,
             'interpolated_strain': interp_strains,
-            'interpolated_stress': np.interp(interp_strains, strain, stress),
-            'hardening_rate': np.gradient(stress),
+            'interpolated_stress': np.interp(interp_strains, plastic_strain, stress),
+            'work_hardening_rate': work_hardening_rate,
+
         }
         # Set the first interpolation value (zero-strain) to the approximate yield stress:
         hardening_data[strain_path]['interpolated_stress'][0] = yield_stress
 
     return hardening_data
+
+
+def show_hardening(hardening_data):
+
+    plot_data = []
+    LEGEND_NAMES = {
+        'uniaxial': 'Uniaxial',
+        'plane_strain': 'Plane strain',
+        'biaxial': 'Biaxial',
+        'equi_biaxial': 'Equi-biaxial',
+    }
+    for strain_path_idx, (strain_path, data) in enumerate(hardening_data.items()):
+        plot_data.append({
+            'x': data['total_strain'],
+            'y': data['stress_smooth'] / 1e6,  # in MPa
+            'name': LEGEND_NAMES[strain_path],
+            'legendgroup': LEGEND_NAMES[strain_path],
+            'xaxis': 'x1',
+            'yaxis': 'y1',
+            'line': {
+                'width': 1,
+                'color': qualitative.D3[strain_path_idx],
+            },
+        })
+
+        plot_data.append({
+            'x': data['total_strain'],
+            'y': data['work_hardening_rate'] / 1e9,  # in GPa
+            'name': LEGEND_NAMES[strain_path],
+            'legendgroup': LEGEND_NAMES[strain_path],
+            'showlegend': False,
+            'xaxis': 'x1',
+            'yaxis': 'y2',
+            'line': {
+                'width': 1,
+                'dash': 'dot',
+                'color': qualitative.D3[strain_path_idx],
+            },
+        })
+
+    layout = {
+        'width': 400,
+        'height': 350,
+        'margin': {'t': 20, 'b': 20, 'l': 20, 'r': 20},
+        'template': 'simple_white',
+        'xaxis': {
+            'title': r'True strain, \strain{}',
+            'range': [-0.01, 0.3],
+            'mirror': 'ticks',
+            'ticks': 'inside',
+            'dtick': 0.1,
+            'tickformat': '.1f',
+
+        },
+        'yaxis': {
+            'anchor': 'x',
+            'title': r'True stress, \trueStressComp{} (\MPa{})',
+            'ticks': 'inside',
+            'range': [0, 330],
+        },
+        'yaxis2': {
+            'anchor': 'x',
+            'side': 'right',
+            'overlaying': 'y',
+            'title': r'Work hardening rate (\GPa{})',
+            'range': [0, 2.5],
+            'tickformat': '.1f',
+            'ticks': 'inside',
+        },
+        'legend': {
+            'x': 0.80,
+            'y': 0.5,
+            'xanchor': 'right',
+            'yanchor': 'middle',
+            'tracegroupgap': 0,
+            # 'bgcolor': 'rgb(250, 250, 250)',
+        },
+    }
+    fig = graph_objects.FigureWidget(data=plot_data, layout=layout)
+    return fig
 
 
 def show_interpolated_plastic_stress_strain_data(hardening_data):
