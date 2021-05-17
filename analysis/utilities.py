@@ -14,15 +14,16 @@ from ipywidgets import widgets
 from IPython.display import display
 from formable.yielding import YieldFunction
 
-def get_color(name: str, sample_names: List[str], normed: bool=True) -> tuple:
-    """Returns a RGB tuple for the dataset based on its label, using a qualitative color scale.""" 
+
+def get_color(name: str, sample_names: List[str], normed: bool = True) -> tuple:
+    """Returns a RGB tuple for the dataset based on its label, using a qualitative color scale."""
     index = sample_names.index(name.split("_")[0])
     rgb_color_str = convert_colors_to_same_type(qualitative.D3[index])[0][0]
     rgb_color_tuple = tuple([
         (int(i) / (255 if normed else 1))
         for i in rgb_color_str.split('(')[1].split(')')[0].split(',')
     ])
-        
+
     return rgb_color_tuple
 
 
@@ -415,6 +416,7 @@ def show_FLC(FLC):
     )
     return fig_wig
 
+
 def plot_FLD_full(simulated_FLC, necking_strains, fracture_strains, constellium_data):
     FLD_full_fig = graph_objects.FigureWidget(
         data=[
@@ -422,12 +424,12 @@ def plot_FLD_full(simulated_FLC, necking_strains, fracture_strains, constellium_
                 'x': constellium_data[:, 0],
                 'y': constellium_data[:, 1],
                 'name': '*Surf.',
-                'mode': 'lines',  
+                'mode': 'lines',
                 'line': {
                     'width': 1.5,
-                    'color': qualitative.D3[3],                     
-                },                
-            },     
+                    'color': qualitative.D3[3],
+                },
+            },
             {
                 'x': constellium_data[:, 2],
                 'y': constellium_data[:, 3],
@@ -435,19 +437,19 @@ def plot_FLD_full(simulated_FLC, necking_strains, fracture_strains, constellium_
                 'mode': 'lines',
                 'line': {
                     'width': 1.5,
-                    'color': qualitative.D3[2],    
-                },                
-            },            
+                    'color': qualitative.D3[2],
+                },
+            },
             {
                 'x': fracture_strains[:, 0],
                 'y': fracture_strains[:, 1],
-                'name': 'Frac. strain       ', # (spaces for legend padding!)
+                'name': 'Frac. strain       ',  # (spaces for legend padding!)
                 'mode': 'markers',
                 'marker': {
                     'size': 8,
                     'symbol': 'circle-open',
                     'color': qualitative.D3[0],
-                },            
+                },
             },
             {
                 'x': necking_strains[:, 0],
@@ -472,7 +474,7 @@ def plot_FLD_full(simulated_FLC, necking_strains, fracture_strains, constellium_
                     'width': 1.2,
                     'color': qualitative.D3[4],
                 },
-            },           
+            },
 
         ],
         layout={
@@ -493,22 +495,23 @@ def plot_FLD_full(simulated_FLC, necking_strains, fracture_strains, constellium_
                 'scaleanchor': 'x',
                 'title': 'Major strain',
                 'mirror': 'ticks',
-                'ticks': 'inside',  
+                'ticks': 'inside',
                 'dtick': 0.1,
-                'tickformat': '.1f',    
+                'tickformat': '.1f',
                 'showgrid': True,
             },
             'legend': {
                 'x': 0.98,
-                'y': 0.98,            
+                'y': 0.98,
                 'xanchor': 'right',
                 'yanchor': 'top',
                 'tracegroupgap': 0,
                 'bgcolor': 'rgb(250, 250, 250)',
-            },        
+            },
         }
     )
     return FLD_full_fig
+
 
 def plot_strain_paths_to_necking_plotly(strain_at_necking, sample_sizes):
     plt_data = []
@@ -550,7 +553,7 @@ def plot_strain_paths_to_necking_plotly(strain_at_necking, sample_sizes):
             'font': {
                 'size': 4,
             },
-        },  
+        },
         {
             'x': -0.065,
             'y': 0.29,
@@ -577,7 +580,7 @@ def plot_strain_paths_to_necking_plotly(strain_at_necking, sample_sizes):
             'font': {
                 'size': 4,
             },
-        },                            
+        },
         {
             'x': 0.018,
             'y': 0.29,
@@ -594,13 +597,13 @@ def plot_strain_paths_to_necking_plotly(strain_at_necking, sample_sizes):
             'showarrow': False,
             'font': {
                 'size': 4,
-            },            
-        },        
+            },
+        },
     ]
     fig = graph_objects.FigureWidget(
         data=plt_data,
         layout={
-            'width':350,
+            'width': 350,
             'height': 310,
             'margin': {'t': 20, 'b': 20, 'l': 20, 'r': 20},
             'template': 'simple_white',
@@ -608,14 +611,14 @@ def plot_strain_paths_to_necking_plotly(strain_at_necking, sample_sizes):
                 'range': [-0.08, 0.105],
                 'title': 'Minor strain',
                 'mirror': 'ticks',
-                'ticks': 'inside',                
-                'tickformat': '.2f',                                
+                'ticks': 'inside',
+                'tickformat': '.2f',
             },
             'yaxis': {
                 'range': [0.0, 0.32],
                 'title': 'Major strain',
                 'mirror': 'ticks',
-                'ticks': 'inside',  
+                'ticks': 'inside',
                 'tickformat': '.2f',
             },
             'annotations': annots,
