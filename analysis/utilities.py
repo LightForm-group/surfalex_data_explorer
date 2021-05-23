@@ -14,6 +14,7 @@ from ipywidgets import widgets
 from IPython.display import display
 from formable.yielding import YieldFunction
 from statsmodels.nonparametric.smoothers_lowess import lowess
+from scipy.optimize import curve_fit
 
 
 def get_color(name: str, sample_names: List[str], normed: bool = True) -> tuple:
@@ -306,7 +307,16 @@ def collect_hardening_data(sim_tasks, yield_stress):
 
     # Collect interpolated stresses to feed to the FE Marciniak-Kuczynski model:
     strain_paths = list(sim_tasks.keys())
-    interp_strains = np.linspace(0, 0.29, num=40)
+    interp_strain_limit = 0.29
+    interp_strain = np.linspace(0, interp_strain_limit, num=40)    
+
+    # For Abaqus input, extrapolate data assuming a constant work hardening rate:
+    extrap_strain_approx_limit = 0.5
+    interp_strain_inc = interp_strain[1]
+    extrap_strain_start = interp_strain_limit + interp_strain_inc
+    num = int(np.ceil((extrap_strain_approx_limit - extrap_strain_start) / interp_strain_inc))
+    extrap_strain_limit = extrap_strain_start + (num * interp_strain_inc)
+    extrap_strain = np.linspace(extrap_strain_start, extrap_strain_limit, num=num+1)
 
     hardening_data = {k: None for k in strain_paths}
     for strain_path, sim_task in sim_tasks.items():
@@ -331,15 +341,30 @@ def collect_hardening_data(sim_tasks, yield_stress):
             work_hardening_rate[(smooth_idx + 1):],
         ))
 
+        interp_stress = np.interp(interp_strain, plastic_strain, stress_smooth)
+
+        # Extrapolate stress using final four interpolated points:
+        lin_fit_num = 4
+        popt, pcov = curve_fit(
+            linear_model,
+            interp_strain[-lin_fit_num:],
+            interp_stress[-lin_fit_num:],
+        )
+        extrap_stress = linear_model(extrap_strain, *popt)
+        extrap_work_hardening_rate = np.zeros(shape=(extrap_strain.size)) + popt[0]
+
         hardening_data[strain_path] = {
             'yield_stress': yield_stress,
             'total_strain': total_strain,
             'plastic_strain': plastic_strain,
             'stress': stress,
             'stress_smooth': stress_smooth,
-            'interpolated_strain': interp_strains,
-            'interpolated_stress': np.interp(interp_strains, plastic_strain, stress),
+            'interpolated_strain': interp_strain, # plastic
+            'interpolated_stress': interp_stress,
+            'extrapolated_strain': extrap_strain, # plastic
+            'extrapolated_stress': extrap_stress,
             'work_hardening_rate': work_hardening_rate,
+            'extrapolated_work_hardening_rate': extrap_work_hardening_rate,
 
         }
         # Set the first interpolation value (zero-strain) to the approximate yield stress:
@@ -348,9 +373,10 @@ def collect_hardening_data(sim_tasks, yield_stress):
     return hardening_data
 
 
-def show_hardening(hardening_data):
+def show_hardening(hardening_data, plastic_strain=False, show_interpolation=False, show_extrapolation=False, layout_args=None):
 
     plot_data = []
+    layout_args = layout_args or {}
     LEGEND_NAMES = {
         'uniaxial': 'Uniaxial',
         'plane_strain': 'Plane strain',
@@ -359,7 +385,7 @@ def show_hardening(hardening_data):
     }
     for strain_path_idx, (strain_path, data) in enumerate(hardening_data.items()):
         plot_data.append({
-            'x': data['total_strain'],
+            'x': data['plastic_strain'] if plastic_strain else data['total_strain'],
             'y': data['stress_smooth'] / 1e6,  # in MPa
             'name': LEGEND_NAMES[strain_path],
             'legendgroup': LEGEND_NAMES[strain_path],
@@ -372,7 +398,7 @@ def show_hardening(hardening_data):
         })
 
         plot_data.append({
-            'x': data['total_strain'],
+            'x': data['plastic_strain'] if plastic_strain else data['total_strain'],
             'y': data['work_hardening_rate'] / 1e9,  # in GPa
             'name': LEGEND_NAMES[strain_path],
             'legendgroup': LEGEND_NAMES[strain_path],
@@ -386,31 +412,112 @@ def show_hardening(hardening_data):
             },
         })
 
+        if show_interpolation:
+            # Show the interpolated stress-strain points (for writing out a plastic table for Abaqus):
+            plot_data.append({
+                'x': data['interpolated_strain'],
+                'y': data['interpolated_stress'] / 1e6,  # in MPa
+                'name': LEGEND_NAMES[strain_path],
+                'legendgroup': LEGEND_NAMES[strain_path],
+                'showlegend': False,
+                'xaxis': 'x1',
+                'yaxis': 'y1',
+                'mode': 'markers',
+                'marker': {
+                    'color': qualitative.D3[strain_path_idx],
+                    'symbol': 'circle',
+                    'size': 4,
+                }
+            })            
+
+
+        if show_extrapolation:
+            # Show extrapolated stress-strain points (which assume constant work hardening rate):
+            plot_data.append({
+                'x': data['extrapolated_strain'],
+                'y': data['extrapolated_stress'] / 1e6,  # in MPa
+                'name': LEGEND_NAMES[strain_path],
+                'legendgroup': LEGEND_NAMES[strain_path],
+                'showlegend': False,                
+                'xaxis': 'x1',
+                'yaxis': 'y1',
+                'mode': 'lines+markers',
+                'line': {
+                    'width': 1,
+                    'color': qualitative.D3[strain_path_idx],
+                },
+                'marker': {
+                    'color': qualitative.D3[strain_path_idx],
+                    'symbol': 'circle-open',
+                    'size': 4,
+                }
+            })   
+            plot_data.append({
+                'x': data['extrapolated_strain'],
+                'y': data['extrapolated_work_hardening_rate'] / 1e9,  # in GPa
+                'name': LEGEND_NAMES[strain_path],
+                'legendgroup': LEGEND_NAMES[strain_path],
+                'showlegend': False,
+                'xaxis': 'x1',
+                'yaxis': 'y2',
+                'mode': 'markers+lines',
+                'line': {
+                    'width': 1,
+                    'dash': 'dot',
+                    'color': qualitative.D3[strain_path_idx],
+                },
+                'marker': {
+                    'color': qualitative.D3[strain_path_idx],
+                    'symbol': 'circle-open',
+                    'size': 4,                    
+                }
+            })              
+
+    xlim_upper = 0.3
+    ylim_upper = 330
+    if show_extrapolation:
+        xlim_upper = np.max([np.max(i['extrapolated_strain']) for i in hardening_data.values()])
+        ylim_upper = np.max([np.max(i['extrapolated_stress']) for i in hardening_data.values()]) / 1e6
     layout = {
         'width': 400,
         'height': 350,
         'margin': {'t': 20, 'b': 20, 'l': 20, 'r': 20},
         'template': 'simple_white',
         'xaxis': {
-            'title': r'True strain, \strain{}',
-            'range': [-0.01, 0.3],
+            'range': [-0.01, xlim_upper],
             'mirror': 'ticks',
             'ticks': 'inside',
             'dtick': 0.1,
             'tickformat': '.1f',
+            'title': {
+                'text': rf'Von Mises true {"plastic " if plastic_strain else ""}strain, \strain{{}}',
+                'font': {
+                    'size': 12,
+                },
+            },
 
         },
         'yaxis': {
             'anchor': 'x',
-            'title': r'True stress, \trueStressComp{} (\MPa{})',
             'ticks': 'inside',
-            'range': [0, 330],
+            'range': [0, ylim_upper],
+            'title': {
+                'text': r'Von Mises true stress, \trueStressComp{} (\MPa{})',
+                'font': {
+                    'size': 12,
+                },
+            },            
         },
         'yaxis2': {
             'anchor': 'x',
             'side': 'right',
             'overlaying': 'y',
-            'title': r'Work hardening rate (\GPa{})',
+            'title': {
+                'text': r'Work hardening rate (\GPa{})',
+                'font': {
+                    'size': 12,
+                },
+            },            
             'range': [0, 2.5],
             'tickformat': '.1f',
             'ticks': 'inside',
@@ -423,18 +530,19 @@ def show_hardening(hardening_data):
             'tracegroupgap': 0,
             # 'bgcolor': 'rgb(250, 250, 250)',
         },
+        **layout_args,
     }
     fig = graph_objects.FigureWidget(data=plot_data, layout=layout)
     return fig
 
 
-def show_interpolated_plastic_stress_strain_data(hardening_data):
+def show_plastic_stress_strain_data(hardening_data):
     interpolated_hardening_data = []
     column_headers = []
     for k, v in hardening_data.items():
-        interpolated_hardening_data.append(v['interpolated_strain'])
-        interpolated_hardening_data.append(v['interpolated_stress'])
-        column_headers.extend([(k, 'interpolated_strain'), (k, 'interpolated_stress')])
+        interpolated_hardening_data.append(np.concatenate((v['interpolated_strain'], v['extrapolated_strain'])))
+        interpolated_hardening_data.append(np.concatenate((v['interpolated_stress'], v['extrapolated_stress'])))
+        column_headers.extend([(k, 'strain'), (k, 'stress')])
     interpolated_hardening_data = np.array(interpolated_hardening_data)
     df = pd.DataFrame(data=interpolated_hardening_data.T,
                       columns=pd.MultiIndex.from_tuples(column_headers))
@@ -729,3 +837,7 @@ def plot_strain_paths_to_necking_plotly(strain_at_necking, sample_sizes):
         },
     )
     return fig
+
+
+def linear_model(x, m, c):
+    return m*x + c
