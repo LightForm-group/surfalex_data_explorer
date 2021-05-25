@@ -8,19 +8,39 @@ nakazima_tests:
     name: nakazima.zip
 modelling_workflows:
     make_volume_element:
-        url: https://sandbox.zenodo.org/record/820069/files/workflow.hdf5
-        md5: 7cd57bef40d02afcbaeea04750e31159
+        workflow_YAML_spec:
+            url: https://sandbox.zenodo.org/record/836840/files/1_make_volume_element.yml
+            md5: ddc4e46fad5a9e265b351e8f446f1cd8        
+        workflow_HDF5_file:
+            url: https://sandbox.zenodo.org/record/836840/files/workflow.hdf5
+            md5: 7cd57bef40d02afcbaeea04750e31159
     fit_single_crystal_parameters:
-        url: https://sandbox.zenodo.org/record/820071/files/workflow.hdf5
-        md5: 086ce35522510db7fc0649178800dce2
+        workflow_YAML_spec:
+            url: https://sandbox.zenodo.org/record/836911/files/2_fit_single_crystal_parameters.yml
+            md5: b5029c0b6de4014e7c6a077a3f9f3542
+        workflow_HDF5_file:
+            url: https://sandbox.zenodo.org/record/836911/files/workflow.hdf5
+            md5: 086ce35522510db7fc0649178800dce2
     fit_yield_functions:
-        url: https://sandbox.zenodo.org/record/820073/files/workflow.hdf5
-        md5: 9ec23c2520d1fa1a6c3ac1cc67c00a99
+        workflow_YAML_spec:
+            url: https://sandbox.zenodo.org/record/836918/files/3_fit_yield_functions.yml
+            md5: a039158dd22226ccfd257df9a8796b41
+        workflow_HDF5_file:
+            url: https://sandbox.zenodo.org/record/836918/files/workflow.hdf5
+            md5: 9ec23c2520d1fa1a6c3ac1cc67c00a99
     estimate_hardening_curves:
-        url: https://sandbox.zenodo.org/record/820075/files/workflow.hdf5
-        md5: 52956b6641d6c2d002af3db47e8c0955
+        workflow_YAML_spec:
+            url: https://sandbox.zenodo.org/record/836921/files/4_estimate_hardening_curves.yml
+            md5: b77af510acd7193c644b5ddbba25956c
+        workflow_HDF5_file:
+            url: https://sandbox.zenodo.org/record/836921/files/workflow.hdf5
+            md5: 52956b6641d6c2d002af3db47e8c0955
     simulate_marciniak_kuczynski:
-        url: https://sandbox.zenodo.org/record/820077/files/workflow.hdf5
-        md5: 53bc248bfdfef431722fc1a8b8a66ad7
+        workflow_YAML_spec:
+            url: https://sandbox.zenodo.org/record/836922/files/MK_analysis.yml
+            md5: 5b0ec60914cdf201e282d93bd90eee52
+        workflow_HDF5_file:
+            url: https://sandbox.zenodo.org/record/836922/files/workflow.hdf5
+            md5: 53bc248bfdfef431722fc1a8b8a66ad7
 
 
