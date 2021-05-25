@@ -311,7 +311,7 @@ def collect_hardening_data(sim_tasks, yield_stress):
     interp_strain = np.linspace(0, interp_strain_limit, num=40)    
 
     # For Abaqus input, extrapolate data assuming a constant work hardening rate:
-    extrap_strain_approx_limit = 0.5
+    extrap_strain_approx_limit = 5
     interp_strain_inc = interp_strain[1]
     extrap_strain_start = interp_strain_limit + interp_strain_inc
     num = int(np.ceil((extrap_strain_approx_limit - extrap_strain_start) / interp_strain_inc))
