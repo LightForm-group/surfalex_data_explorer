@@ -841,3 +841,73 @@ def plot_strain_paths_to_necking_plotly(strain_at_necking, sample_sizes):
 
 def linear_model(x, m, c):
     return m*x + c
+
+def get_yield_function_fitting_error(all_load_responses, yield_function_idx):
+    
+    error_data = {}
+    for idx, load_resp in enumerate(all_load_responses):
+        abs_residual = np.abs(load_resp.fitted_yield_functions[yield_function_idx]['yield_function'].fit_info.fun)
+        name = load_resp.fitted_yield_functions[yield_function_idx]['yield_function'].name
+        error_data.update({name: abs_residual})
+        
+    return error_data
+
+def show_yield_function_fitting_error(all_load_responses, yield_function_idx, layout_args=None):
+    """Plot the yield function fitting residual at the optimised solution."""
+        
+    legend_names = {
+        'Hill1948': 'Hill 1948',
+        'Barlat_Yld91': 'Bar.\ Yld91',
+        'Barlat_Yld2004_18p': 'Bar.\ Yld2004-18p',
+    }
+
+    plt_data = []
+    err_data = get_yield_function_fitting_error(all_load_responses, yield_function_idx)
+    for idx, (name, err_data) in enumerate(err_data.items()):
+        load_resp = all_load_responses[idx]
+        plt_data.append({
+            'type': 'histogram',
+            'x': err_data * 1e2,
+            'xbins': {
+                'size': 0.01 * 1e2
+            },
+            'marker': {
+                'color': qualitative.D3[idx],
+            },
+            'name': legend_names.get(name, name),
+        })
+        
+    layout = {
+        'template': 'simple_white',
+        'width': 280,
+        'height': 280,
+        'margin': {'t': 20, 'b': 20, 'l': 20, 'r': 20},
+        'xaxis': {
+            'title': {
+                'text': r'\yldFuncResidualXLab{}',
+            },
+            'dtick': 0.01 * 1e2,            
+            'mirror': 'ticks',
+            'ticks': 'inside',            
+        },
+        'yaxis': {
+            'title': {
+                'text': 'Number of stress states',
+            },
+            'mirror': 'ticks',
+            'ticks': 'inside',             
+        },
+        'legend': {
+            'x': 0.3,
+            'y': 0.9,
+            'xanchor': 'left',
+            'yanchor': 'top',
+            'bgcolor': 'rgba(255, 255, 255, 0)',
+            'tracegroupgap': 0,
+        }        
+    }
+    fig = graph_objects.FigureWidget(
+        data=plt_data,
+        layout={**layout, **(layout_args or {})}
+    )
+    return fig
