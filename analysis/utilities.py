@@ -343,15 +343,15 @@ def collect_hardening_data(sim_tasks, yield_stress):
 
         interp_stress = np.interp(interp_strain, plastic_strain, stress_smooth)
 
-        # Extrapolate stress using final four interpolated points:
         lin_fit_num = 4
+        # Extrapolate stress using final `lin_fit_num` interpolated points:        
         popt, pcov = curve_fit(
             linear_model,
             interp_strain[-lin_fit_num:],
             interp_stress[-lin_fit_num:],
         )
         extrap_stress = linear_model(extrap_strain, *popt)
-        extrap_work_hardening_rate = np.zeros(shape=(extrap_strain.size)) + popt[0]
+        extrap_work_hardening_rate = np.zeros(shape=(extrap_strain.size + lin_fit_num)) + popt[0]
 
         hardening_data[strain_path] = {
             'yield_stress': yield_stress,
@@ -365,6 +365,7 @@ def collect_hardening_data(sim_tasks, yield_stress):
             'extrapolated_stress': extrap_stress,
             'work_hardening_rate': work_hardening_rate,
             'extrapolated_work_hardening_rate': extrap_work_hardening_rate,
+            'lin_fit_num': lin_fit_num,
 
         }
         # Set the first interpolation value (zero-strain) to the approximate yield stress:
@@ -373,7 +374,8 @@ def collect_hardening_data(sim_tasks, yield_stress):
     return hardening_data
 
 
-def show_hardening(hardening_data, plastic_strain=False, show_interpolation=False, show_extrapolation=False, layout_args=None):
+def show_hardening(hardening_data, plastic_strain=False, show_interpolation=False,
+                   show_extrapolation=False, layout_args=None, fix_scales=True):
 
     plot_data = []
     layout_args = layout_args or {}
@@ -441,7 +443,7 @@ def show_hardening(hardening_data, plastic_strain=False, show_interpolation=Fals
                 'showlegend': False,                
                 'xaxis': 'x1',
                 'yaxis': 'y1',
-                'mode': 'lines+markers',
+                'mode': 'lines',
                 'line': {
                     'width': 1,
                     'color': qualitative.D3[strain_path_idx],
@@ -453,14 +455,17 @@ def show_hardening(hardening_data, plastic_strain=False, show_interpolation=Fals
                 }
             })   
             plot_data.append({
-                'x': data['extrapolated_strain'],
+                'x': np.concatenate((
+                    data['interpolated_strain'][-data['lin_fit_num']:],
+                    data['extrapolated_strain']
+                )),
                 'y': data['extrapolated_work_hardening_rate'] / 1e9,  # in GPa
                 'name': LEGEND_NAMES[strain_path],
                 'legendgroup': LEGEND_NAMES[strain_path],
                 'showlegend': False,
                 'xaxis': 'x1',
                 'yaxis': 'y2',
-                'mode': 'markers+lines',
+                'mode': 'lines',
                 'line': {
                     'width': 1,
                     'dash': 'dot',
@@ -487,8 +492,6 @@ def show_hardening(hardening_data, plastic_strain=False, show_interpolation=Fals
             'range': [-0.01, xlim_upper],
             'mirror': 'ticks',
             'ticks': 'inside',
-            'dtick': 0.1,
-            'tickformat': '.1f',
             'title': {
                 'text': rf'Von Mises true {"plastic " if plastic_strain else ""}strain, \strain{{}}',
                 'font': {
@@ -519,7 +522,6 @@ def show_hardening(hardening_data, plastic_strain=False, show_interpolation=Fals
                 },
             },            
             'range': [0, 2.5],
-            'tickformat': '.1f',
             'ticks': 'inside',
         },
         'legend': {
@@ -532,6 +534,15 @@ def show_hardening(hardening_data, plastic_strain=False, show_interpolation=Fals
         },
         **layout_args,
     }
+
+    if fix_scales:
+        layout['xaxis'].update({
+            'dtick': 0.1,
+            'tickformat': '.1f',
+        })
+        layout['yaxis2'].update({
+            'tickformat': '.1f',
+        })
     fig = graph_objects.FigureWidget(data=plot_data, layout=layout)
     return fig
 
