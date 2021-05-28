@@ -570,7 +570,7 @@ def get_latex_yield_func_params(yield_func_name, yield_func_param_vals, val_form
     latex_keys = []
     for k, v in yield_func_param_vals.items():
 
-        if k in ['yield_point', 'equivalent_stress', 'exponent']:
+        if k in ['yield_point', 'equivalent_stress']:
             continue
 
         vals.append(f'{v:{val_format}}')
@@ -580,15 +580,22 @@ def get_latex_yield_func_params(yield_func_name, yield_func_param_vals, val_form
                 new_k = f'\\yldFuncLinTransComp{{\\myprime}}{{{k[-2:]}}}'
             elif '_dp_' in k:
                 new_k = f'\\yldFuncLinTransComp{{\\mydprime}}{{{k[-2:]}}}'
+            elif k == 'exponent': 
+                new_k = '\\yldFuncExp{}'
             else:
                 raise ValueError(k)
             latex_keys.append(new_k)
 
         elif yield_func_name == 'Barlat_Yld91':
-            new_k = f'${k.upper()}$'
+            if k == 'exponent': 
+                new_k = '\\yldFuncExp{}'
+            else:
+                new_k = f'${k.upper()}$'
             latex_keys.append(new_k)
 
         elif yield_func_name == 'Hill1948':
+            if k == 'exponent': 
+                continue
             new_k = '$' + k + '_\\mathrm{h}$'
             latex_keys.append(new_k)
 
