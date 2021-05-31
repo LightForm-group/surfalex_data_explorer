@@ -929,3 +929,33 @@ def show_yield_function_fitting_error(all_load_responses, yield_function_idx, la
         layout={**layout, **(layout_args or {})}
     )
     return fig
+
+def plot_yield_function_exponent_evolution(all_fitted_params):
+    barlat_18p_exp_evo = [i['exponent'] for i in all_fitted_params['Barlat_Yld2004_18p']]
+    barlat_6p_exp_evo = [i['exponent'] for i in all_fitted_params['Barlat_Yld91']]
+    yield_points = [i['yield_point'] for i in all_fitted_params['Barlat_Yld2004_18p']]    
+    fig = graph_objects.FigureWidget(
+        data=[
+            {
+                'x': yield_points,
+                'y': barlat_6p_exp_evo,
+                'name': 'Barlat Yld91',
+                'line': {
+                    'color': qualitative.D3[1],
+                },
+            },            
+            {
+                'x': yield_points,
+                'y': barlat_18p_exp_evo,
+                'name': 'Barlat Yld2004-18p',
+                'line': {
+                    'color': qualitative.D3[2],
+                },                
+            },
+        ],
+        layout={
+            'xaxis_title': 'Yield point (Von Mises plastic strain)',
+            'yaxis_title': 'Yield function exponent, m',
+        }
+    )
+    return fig
