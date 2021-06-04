@@ -840,14 +840,14 @@ def plot_strain_paths_to_necking_plotly(strain_at_necking, sample_sizes):
             'template': 'simple_white',
             'xaxis': {
                 'range': [-0.08, 0.105],
-                'title': 'Minor strain',
+                'title': r'Minor strain, \minorStrain{}',
                 'mirror': 'ticks',
                 'ticks': 'inside',
                 'tickformat': '.2f',
             },
             'yaxis': {
                 'range': [0.0, 0.32],
-                'title': 'Major strain',
+                'title': r'Major strain, \majorStrain{}',
                 'mirror': 'ticks',
                 'ticks': 'inside',
                 'tickformat': '.2f',
