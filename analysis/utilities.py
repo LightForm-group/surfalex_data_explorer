@@ -166,6 +166,7 @@ def plot_static_figure_single_crystal_fitting(lm_fitter):
             'mirror': 'ticks',
             'ticks': 'inside',
             'range': [0, 310],
+            'dtick': 50,
         },
         'legend': {
             'x': 0.95,
