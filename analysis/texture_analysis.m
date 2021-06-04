@@ -165,7 +165,7 @@ for file_number = 1:length(file_names)
         ori = ebsd('Aluminium').orientations;
         x = [Miller(1, 0, 0, ori.CS), Miller(1, 1, 0, ori.CS), Miller(1, 1, 1, ori.CS)];
 
-        plotPDF(ori, x, 'antipodal', 'contourf', 'earea', 'LineWidth', 0.3);
+        plotPDF(ori, x, 'antipodal', 'contourf', 'earea', 'LineWidth', 0.1);
 
         % Turn off x and y labels on figures.
         pfAnnotations = @(varargin) [];
