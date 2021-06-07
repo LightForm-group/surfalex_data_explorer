@@ -1083,3 +1083,52 @@ def plot_lankford_parameter_comparison(surfalex_workflow, random_workflow, exper
         },
     )
     return fig
+
+def plot_static_figure_stress_strain_curves(cropped_voltage_data):
+    fig = graph_objects.FigureWidget(
+        data=[
+            {
+                'x': data[:, 0],
+                'y': data[:, 1],
+                'name': f'\\ang{{{exp_name.split("-")[0]}}}',
+                'line': {
+                    'color': qualitative.D3[idx // 2]
+                },
+            }
+            for idx, (exp_name, data) in enumerate(cropped_voltage_data.items())
+            if exp_name[-1] == '1'
+        ],
+        layout={
+            'width': 280,
+            'height': 250,
+            'margin': {'t': 20, 'b': 20, 'l': 20, 'r': 20},
+            'template': 'simple_white',            
+            'xaxis': {
+                'title': 'True strain, \strain{}',
+                'mirror': 'ticks',
+                'ticks': 'inside',
+                'range': [-0.01, 0.35],
+                'dtick': 0.10,
+                'tickformat': '.1f',                
+            },
+            'yaxis': {
+                'title': 'True stress, \stress{} (\MPa)',
+                'mirror': 'ticks',
+                'ticks': 'inside',
+                'range': [0.0, 330],
+                'dtick': 50,
+            },
+            'legend': {
+                'x': 1.03,
+                'y': 0.10,
+                'xanchor': 'right',
+                'yanchor': 'bottom',
+                'tracegroupgap': 0,
+                'bgcolor': 'rgba(255, 255, 255, 0)',
+                'font': {
+                    'size': 10,
+                }
+            },
+        },
+    )
+    return fig
