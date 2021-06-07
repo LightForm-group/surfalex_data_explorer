@@ -9,6 +9,6 @@ dic-analysis~=0.3.1
 plotly~=4.14.3
 psutil~=5.8.0 # for plotly image export
 kaleido~=0.2.1 # for plotly image export
-matflow==0.2.20
+matflow==0.2.21
 formable==0.1.17
 statsmodels~=0.12.2
