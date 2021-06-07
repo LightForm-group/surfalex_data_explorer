@@ -960,3 +960,126 @@ def plot_yield_function_exponent_evolution(all_fitted_params):
         }
     )
     return fig
+
+def get_strain_ratios(vol_avg_def_grad, sheet_dirs=None):
+    """Get the RVE strains and the Lankford coefficient from the volume-averaged
+    deformation gradient, using the diagonal components of the Green strain.
+    
+    Parameters
+    ----------
+    vol_avg_def_grad : ndarray of shape (N, 3, 3)
+        Deformation gradient tensor for each of N simulation increments.
+    sheet_dirs : dict of (str: str), optional
+        Dict assigning each Cartesian direction to RD/TD/ND. If None,
+        "x" will be assigned to "RD", "y" to "TD" and "z" to "ND".
+               
+    """
+    
+    if not sheet_dirs:
+        sheet_dirs = {
+            'x': 'RD',
+            'y': 'TD',
+            'z': 'ND',
+        }
+        
+    sheet_dirs_inv = {v: k for k, v in sheet_dirs.items()}
+    cart_dirs = ['x', 'y', 'z']
+    sheet_dir_idx = {i: cart_dirs.index(sheet_dirs_inv[i]) for i in sheet_dirs.values()}
+    
+    F = vol_avg_def_grad
+    F_T = np.transpose(F, (0, 2, 1))
+    green_strain = 0.5 * ((F_T @ F) - np.eye(3))
+    
+    strain_thick = green_strain[:, sheet_dir_idx['ND'], sheet_dir_idx['ND']]
+    strain_trans = green_strain[:, sheet_dir_idx['TD'], sheet_dir_idx['TD']]
+    strain_long = green_strain[:, sheet_dir_idx['RD'], sheet_dir_idx['RD']]
+    
+    true_strain_trans = np.log(strain_trans[1:] + 1)
+    true_strain_long = np.log(strain_long[1:] + 1)
+    true_strain_thick = np.log(strain_thick[1:] + 1)    
+    true_strain_vol = true_strain_trans + true_strain_long + true_strain_thick
+    
+    lankford = true_strain_trans / -(true_strain_long + true_strain_trans)    
+    # lankford = true_strain_trans / true_strain_thick
+    
+    out = {
+        'strain_thick': strain_thick,
+        'strain_trans': strain_trans,
+        'strain_long': strain_long,
+        'strain_vol': true_strain_vol,
+        'lankford': lankford,        
+    }
+    return out
+
+
+def plot_lankford_parameter_comparison(surfalex_workflow, random_workflow, experimental_lankford=None):
+
+    sim_elem_surf = surfalex_workflow.tasks.simulate_volume_element_loading.elements[0]
+    sim_elem_rand = random_workflow.tasks.simulate_volume_element_loading.elements[0]
+    vol_avg_def_grad_surfalex = sim_elem_surf.outputs.volume_element_response['vol_avg_def_grad']['data']
+    vol_avg_def_grad_random = sim_elem_rand.outputs.volume_element_response['vol_avg_def_grad']['data']
+    
+    true_strain_surfalex = sim_elem_surf.outputs.volume_element_response['vol_avg_equivalent_strain']['data']
+    true_strain_random = sim_elem_rand.outputs.volume_element_response['vol_avg_equivalent_strain']['data']
+    
+    lankford_surfalex = get_strain_ratios(vol_avg_def_grad_surfalex)['lankford']
+    lankford_random = get_strain_ratios(vol_avg_def_grad_random)['lankford']
+
+    plt_data = [
+        {
+            'x': true_strain_random,
+            'y': lankford_random,
+            'name': 'Random RVE',
+            'line': {
+                'color': qualitative.D3[0],
+            },            
+        },        
+        {
+            'x': true_strain_surfalex,
+            'y': lankford_surfalex,
+            'name': 'Surfalex RVE',
+            'line': {
+                'color': qualitative.D3[1],
+            },
+        },        
+    ]
+
+    if experimental_lankford:
+        plt_data.append({
+            'x': experimental_lankford[0],
+            'y': experimental_lankford[1],
+            'name': 'Experimental',
+            'line': {
+                'color': qualitative.D3[2],
+            },
+        })
+
+    fig = graph_objects.FigureWidget(
+        data=plt_data,
+        layout={
+            'width': 350,
+            'height': 300,
+            'margin': {'t': 20, 'b': 20, 'l': 20, 'r': 20},
+            'template': 'simple_white',            
+            'xaxis': {
+                'title': 'True strain',
+                'mirror': 'ticks',
+                'ticks': 'inside',
+                'range': [0.02, 0.26],
+            },
+            'yaxis': {
+                'title': 'Lankford parameter',
+                'mirror': 'ticks',
+                'ticks': 'inside',
+                'range': [0.1, 1.0],
+            },
+            'legend': {
+                'x': 0.95,
+                'y': 0.05,
+                'xanchor': 'right',
+                'yanchor': 'bottom',
+                'tracegroupgap': 0,
+            },
+        },
+    )
+    return fig
