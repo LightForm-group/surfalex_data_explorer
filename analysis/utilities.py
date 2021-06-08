@@ -494,7 +494,7 @@ def show_hardening(hardening_data, plastic_strain=False, show_interpolation=Fals
             'mirror': 'ticks',
             'ticks': 'inside',
             'title': {
-                'text': rf'Von Mises true {"plastic " if plastic_strain else ""}strain, \strain{{}}',
+                'text': rf'Von Mises true {"plastic " if plastic_strain else ""}strain, \strainVM{{}}',
                 'font': {
                     'size': 12,
                 },
@@ -506,7 +506,7 @@ def show_hardening(hardening_data, plastic_strain=False, show_interpolation=Fals
             'ticks': 'inside',
             'range': [0, ylim_upper],
             'title': {
-                'text': r'Von Mises true stress, \trueStressComp{} (\MPa{})',
+                'text': r'Von Mises true stress, \stressVM{} (\MPa{})',
                 'font': {
                     'size': 12,
                 },
