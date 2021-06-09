@@ -1090,54 +1090,35 @@ def get_strain_ratios(vol_avg_def_grad, sheet_dirs=None):
     }
     return out
 
+def get_simulated_lankford_parameter(workflow):
 
-def plot_lankford_parameter_comparison(surfalex_workflow, random_workflow, experimental_lankford=None):
+    sim_elem = workflow.tasks.simulate_volume_element_loading.elements[0]    
+    vol_avg_def_grad = sim_elem.outputs.volume_element_response['vol_avg_def_grad']['data']        
+    true_strain = sim_elem.outputs.volume_element_response['vol_avg_equivalent_strain']['data']        
+    lankford = get_strain_ratios(vol_avg_def_grad)['lankford']
+    
+    return (true_strain, lankford)
 
-    sim_elem_surf = surfalex_workflow.tasks.simulate_volume_element_loading.elements[0]
-    sim_elem_rand = random_workflow.tasks.simulate_volume_element_loading.elements[0]
-    vol_avg_def_grad_surfalex = sim_elem_surf.outputs.volume_element_response['vol_avg_def_grad']['data']
-    vol_avg_def_grad_random = sim_elem_rand.outputs.volume_element_response['vol_avg_def_grad']['data']
-    
-    true_strain_surfalex = sim_elem_surf.outputs.volume_element_response['vol_avg_equivalent_strain']['data']
-    true_strain_random = sim_elem_rand.outputs.volume_element_response['vol_avg_equivalent_strain']['data']
-    
-    lankford_surfalex = get_strain_ratios(vol_avg_def_grad_surfalex)['lankford']
-    lankford_random = get_strain_ratios(vol_avg_def_grad_random)['lankford']
+
+def plot_lankford_parameter_comparison(lankford_parameter_evolution):
 
     plt_data = [
         {
-            'x': true_strain_random,
-            'y': lankford_random,
-            'name': 'Random RVE',
+            'x': true_strain,
+            'y': R,
+            'name': name,
             'line': {
-                'color': qualitative.D3[0],
+                'color': 'black' if 'Random' in name else ('blue' if 'Surfalex' in name else (qualitative.D3[idx // 2])),
+                'dash': ('dot' if idx % 2 == 0 else 'solid') if 'Simulated' not in name else 'dashdot',
+                'width': 1.2,
             },            
-        },        
-        {
-            'x': true_strain_surfalex,
-            'y': lankford_surfalex,
-            'name': 'Surfalex RVE',
-            'line': {
-                'color': qualitative.D3[1],
-            },
-        },        
+        }
+        for idx, (name, (true_strain, R)) in enumerate(lankford_parameter_evolution.items())
     ]
-
-    if experimental_lankford:
-        plt_data.append({
-            'x': experimental_lankford[0],
-            'y': experimental_lankford[1],
-            'name': 'Experimental',
-            'line': {
-                'color': qualitative.D3[2],
-            },
-        })
 
     fig = graph_objects.FigureWidget(
         data=plt_data,
         layout={
-            'width': 350,
-            'height': 300,
             'margin': {'t': 20, 'b': 20, 'l': 20, 'r': 20},
             'template': 'simple_white',            
             'xaxis': {
@@ -1151,13 +1132,6 @@ def plot_lankford_parameter_comparison(surfalex_workflow, random_workflow, exper
                 'mirror': 'ticks',
                 'ticks': 'inside',
                 'range': [0.1, 1.0],
-            },
-            'legend': {
-                'x': 0.95,
-                'y': 0.05,
-                'xanchor': 'right',
-                'yanchor': 'bottom',
-                'tracegroupgap': 0,
             },
         },
     )
