@@ -499,6 +499,12 @@ def show_work_hardening_extrapolated(hardening_data, show_interpolation=True, sh
                 'side': 'right',
                 'overlaying': 'y',            
                 'range': [0, 2.5],
+                'title': {
+                    'text': r'Work hardening rate (\GPa{})',
+                    'font': {
+                        'size': 12,
+                    },                    
+                }
             },
             'legend': {
                 'x': 0.80,
