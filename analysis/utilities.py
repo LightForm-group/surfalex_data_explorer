@@ -304,197 +304,276 @@ def show_all_fitted_yield_function_parameters(all_load_responses):
     return all_fitted_params
 
 
-def collect_hardening_data(sim_tasks, yield_stress):
-
-    # Collect interpolated stresses to feed to the FE Marciniak-Kuczynski model:
-    strain_paths = list(sim_tasks.keys())
-    interp_strain_limit = 0.29
-    interp_strain = np.linspace(0, interp_strain_limit, num=40)    
-
-    # For Abaqus input, extrapolate data assuming a constant work hardening rate:
-    extrap_strain_approx_limit = 5
-    interp_strain_inc = interp_strain[1]
-    extrap_strain_start = interp_strain_limit + interp_strain_inc
-    num = int(np.ceil((extrap_strain_approx_limit - extrap_strain_start) / interp_strain_inc))
-    extrap_strain_limit = extrap_strain_start + (num * interp_strain_inc)
-    extrap_strain = np.linspace(extrap_strain_start, extrap_strain_limit, num=num+1)
-
-    hardening_data = {k: None for k in strain_paths}
+def collect_hardening_data(sim_tasks, yield_stress, extrapolation_mode='constant_hardening',
+                            extrapolate_to_strain=0.5, linear_fit_num=100,
+                            plastic_table_strain_interval=2e-3):
+    
+    hardening_data = {}
     for strain_path, sim_task in sim_tasks.items():
-
         vol_elem_response = sim_task.elements[0].outputs.volume_element_response
-        total_strain = vol_elem_response['vol_avg_equivalent_strain']['data']
-        plastic_strain = vol_elem_response['vol_avg_equivalent_plastic_strain']['data']
-        stress = vol_elem_response['vol_avg_equivalent_stress']['data']
+        strain_vM_total = vol_elem_response['vol_avg_equivalent_strain']['data']
+        strain_vM_plastic = vol_elem_response['vol_avg_equivalent_plastic_strain']['data']
+        stress_vM = vol_elem_response['vol_avg_equivalent_stress']['data']
 
         # Smooth oscillations in stress for higher strains:
-        smooth_idx = np.where(total_strain > 0.15)[0][0]
-        lowess_out = lowess(stress, total_strain, is_sorted=True,
-                            frac=0.025, it=0, return_sorted=False)
-        stress_smooth = np.concatenate((
-            stress[:smooth_idx],
+        smooth_idx = np.where(strain_vM_total > 0.15)[0][0]
+        lowess_out = lowess(stress_vM, strain_vM_total, is_sorted=True, frac=0.025, it=0, return_sorted=False)
+        stress_vM_smooth = np.concatenate((
+            stress_vM[:smooth_idx],
             lowess_out[smooth_idx:]
         ))
-        work_hardening_rate = np.gradient(stress_smooth, plastic_strain)
+
+        # Extrapolate (strain_vM_plastic, stress_vM_smooth):
+        if extrapolation_mode == 'constant_stress':
+            add_strain = np.linspace(strain_vM_plastic[-1], extrapolate_to_strain, 1000)
+            add_stress = np.zeros_like(add_strain) + stress_vM_smooth[-1]
+
+        elif extrapolation_mode == 'final_work_hardening_rate':
+            # Continue final work hardening rate
+            (linear_m, linear_c), pcov = curve_fit(
+                linear_model,
+                strain_vM_plastic[-linear_fit_num:],
+                stress_vM_smooth[-linear_fit_num:],
+            )
+            add_strain = np.linspace(strain_vM_plastic[-1], extrapolate_to_strain, 1000)
+            add_stress = linear_model(add_strain, linear_m, linear_c)
+
+        elif isinstance(extrapolation_mode, (float, int)):
+            # Assume this number to be the work hardening rate at which to extrapolate
+            known_point = (strain_vM_plastic[-1], stress_vM_smooth[-1])
+            linear_m = extrapolation_mode
+            linear_c = known_point[1] - (linear_m * known_point[0])
+            add_strain = np.linspace(strain_vM_plastic[-1], extrapolate_to_strain, 1000)
+            add_stress = linear_model(add_strain, linear_m, linear_c)        
+        else:
+            raise NotImplementedError(f'Unknown `extrapolation_mode`: {extrapolation_mode}')
+
+        strain_vM_plastic_extrap = np.concatenate((strain_vM_plastic, add_strain[1:]))
+        stress_vM_smooth_extrap = np.concatenate((stress_vM_smooth, add_stress[1:]))    
+        work_hardening_rate = np.gradient(stress_vM_smooth_extrap, strain_vM_plastic_extrap)
+    
         # Skip transition point to smoothed data:
         work_hardening_rate = np.concatenate((
             work_hardening_rate[:(smooth_idx - 1)],
             work_hardening_rate[(smooth_idx + 1):],
         ))
 
-        interp_stress = np.interp(interp_strain, plastic_strain, stress_smooth)
-
-        lin_fit_num = 4
-        # Extrapolate stress using final `lin_fit_num` interpolated points:        
-        popt, pcov = curve_fit(
-            linear_model,
-            interp_strain[-lin_fit_num:],
-            interp_stress[-lin_fit_num:],
+        # Interpolate a subset of (strain_vM_plastic_extrap, stress_vM_smooth_extrap) for FE plastic table:
+        plastic_table_size = int(extrapolate_to_strain / plastic_table_strain_interval)
+        strain_vM_plastic_extrap_subset = np.linspace(0, extrapolate_to_strain, num=plastic_table_size)
+        stress_vM_smooth_extrap_subset = np.interp(
+            strain_vM_plastic_extrap_subset,
+            strain_vM_plastic_extrap,
+            stress_vM_smooth_extrap,
         )
-        extrap_stress = linear_model(extrap_strain, *popt)
-        extrap_work_hardening_rate = np.zeros(shape=(extrap_strain.size + lin_fit_num)) + popt[0]
-
-        hardening_data[strain_path] = {
-            'yield_stress': yield_stress,
-            'total_strain': total_strain,
-            'plastic_strain': plastic_strain,
-            'stress': stress,
-            'stress_smooth': stress_smooth,
-            'interpolated_strain': interp_strain, # plastic
-            'interpolated_stress': interp_stress,
-            'extrapolated_strain': extrap_strain, # plastic
-            'extrapolated_stress': extrap_stress,
-            'work_hardening_rate': work_hardening_rate,
-            'extrapolated_work_hardening_rate': extrap_work_hardening_rate,
-            'lin_fit_num': lin_fit_num,
-
-        }
         # Set the first interpolation value (zero-strain) to the approximate yield stress:
-        hardening_data[strain_path]['interpolated_stress'][0] = yield_stress
-
+        stress_vM_smooth_extrap_subset[0] = yield_stress    
+        
+        hardening_data[strain_path] = {
+            'strain_vM_total': strain_vM_total,
+            'strain_vM_plastic': strain_vM_plastic,
+            'stress_vM': stress_vM,
+            'stress_vM_smooth': stress_vM_smooth,
+            'strain_vM_plastic_extrap': strain_vM_plastic_extrap,
+            'stress_vM_smooth_extrap': stress_vM_smooth_extrap,
+            'work_hardening_rate': work_hardening_rate,
+            'strain_vM_plastic_extrap_subset': strain_vM_plastic_extrap_subset, # for FE sim plastic table
+            'stress_vM_smooth_extrap_subset': stress_vM_smooth_extrap_subset, # for FE sim plastic table            
+            'yield_stress': yield_stress,
+            'extrapolation_mode': extrapolation_mode,
+            'extrapolate_to_strain': extrapolate_to_strain,
+            'linear_fit_num': linear_fit_num,
+            'plastic_table_strain_interval': plastic_table_strain_interval,
+            'plastic_table_size': plastic_table_size,
+        }
+    
     return hardening_data
 
-
-def show_hardening(hardening_data, plastic_strain=False, show_interpolation=False,
-                   show_extrapolation=False, layout_args=None, fix_scales=True):
-
-    plot_data = []
+def show_work_hardening_extrapolated(hardening_data, show_interpolation=True, show_non_extrapolated_stress=False,
+                                     layout_args=None):
+    """Plot Von Mises stress-plastic-strain extrapolated data and work hardening rate curves from simulations."""
+    
     layout_args = layout_args or {}
     LEGEND_NAMES = {
         'uniaxial': 'Uniaxial',
         'plane_strain': 'Plane strain',
         'biaxial': 'Biaxial',
         'equi_biaxial': 'Equi-biaxial',
-    }
-    for strain_path_idx, (strain_path, data) in enumerate(hardening_data.items()):
-        plot_data.append({
-            'x': data['plastic_strain'] if plastic_strain else data['total_strain'],
-            'y': data['stress_smooth'] / 1e6,  # in MPa
+    }    
+    plt_data = []
+    for strain_path_idx, (strain_path, hard_data) in enumerate(hardening_data.items()):
+        
+        legend_data = {
             'name': LEGEND_NAMES[strain_path],
-            'legendgroup': LEGEND_NAMES[strain_path],
-            'xaxis': 'x1',
-            'yaxis': 'y1',
-            'line': {
-                'width': 1,
-                'color': qualitative.D3[strain_path_idx],
-            },
-        })
-
-        plot_data.append({
-            'x': data['plastic_strain'] if plastic_strain else data['total_strain'],
-            'y': data['work_hardening_rate'] / 1e9,  # in GPa
-            'name': LEGEND_NAMES[strain_path],
-            'legendgroup': LEGEND_NAMES[strain_path],
-            'showlegend': False,
-            'xaxis': 'x1',
-            'yaxis': 'y2',
-            'line': {
-                'width': 1,
-                'dash': 'dot',
-                'color': qualitative.D3[strain_path_idx],
-            },
-        })
-
+            'legendgroup': LEGEND_NAMES[strain_path],            
+        }
+        
         if show_interpolation:
-            # Show the interpolated stress-strain points (for writing out a plastic table for Abaqus):
-            plot_data.append({
-                'x': data['interpolated_strain'],
-                'y': data['interpolated_stress'] / 1e6,  # in MPa
-                'name': LEGEND_NAMES[strain_path],
-                'legendgroup': LEGEND_NAMES[strain_path],
-                'showlegend': False,
+            # Show the subset of data used to generate the FE plastic tables:
+            plt_data.append({
+                'x': hard_data['strain_vM_plastic_extrap_subset'],
+                'y': hard_data['stress_vM_smooth_extrap_subset'],
                 'xaxis': 'x1',
                 'yaxis': 'y1',
+                'text': np.arange(hard_data['strain_vM_plastic_extrap'].size),            
                 'mode': 'markers',
                 'marker': {
                     'color': qualitative.D3[strain_path_idx],
                     'symbol': 'circle',
                     'size': 4,
-                }
-            })            
-
-
-        if show_extrapolation:
-            # Show extrapolated stress-strain points (which assume constant work hardening rate):
-            plot_data.append({
-                'x': data['extrapolated_strain'],
-                'y': data['extrapolated_stress'] / 1e6,  # in MPa
-                'name': LEGEND_NAMES[strain_path],
-                'legendgroup': LEGEND_NAMES[strain_path],
-                'showlegend': False,                
+                },
+                'showlegend': False,
+                **legend_data,
+            })
+        
+        plt_data.extend([                    
+            {
+                'x': hard_data['strain_vM_plastic_extrap'],
+                'y': hard_data['stress_vM_smooth_extrap'],
                 'xaxis': 'x1',
                 'yaxis': 'y1',
-                'mode': 'lines',
+                'text': np.arange(hard_data['strain_vM_plastic_extrap'].size),
                 'line': {
                     'width': 1,
                     'color': qualitative.D3[strain_path_idx],
                 },
-                'marker': {
-                    'color': qualitative.D3[strain_path_idx],
-                    'symbol': 'circle-open',
-                    'size': 4,
-                }
-            })   
-            plot_data.append({
-                'x': np.concatenate((
-                    data['interpolated_strain'][-data['lin_fit_num']:],
-                    data['extrapolated_strain']
-                )),
-                'y': data['extrapolated_work_hardening_rate'] / 1e9,  # in GPa
-                'name': LEGEND_NAMES[strain_path],
-                'legendgroup': LEGEND_NAMES[strain_path],
-                'showlegend': False,
+                'showlegend': True,
+                **legend_data,                           
+            },
+            {
+                'x': hard_data['strain_vM_plastic_extrap'],
+                'y': hard_data['work_hardening_rate'] / 1e9,
                 'xaxis': 'x1',
                 'yaxis': 'y2',
-                'mode': 'lines',
+                'text': np.arange(hard_data['strain_vM_plastic_extrap'].size),
                 'line': {
                     'width': 1,
-                    'dash': 'dot',
                     'color': qualitative.D3[strain_path_idx],
                 },
-                'marker': {
+                'showlegend': False,
+                **legend_data,                
+            },
+        ])
+        
+        if show_non_extrapolated_stress: 
+            plt_data.append({
+                'x': hard_data['strain_vM_plastic'],
+                'y': hard_data['stress_vM_smooth'],
+                'xaxis': 'x1',
+                'yaxis': 'y1',
+                'text': np.arange(hard_data['strain_vM_plastic'].size),
+                'line': {
+                    'width': 2,
                     'color': qualitative.D3[strain_path_idx],
-                    'symbol': 'circle-open',
-                    'size': 4,                    
-                }
-            })              
+                },
+                'showlegend': False,
+                **legend_data,
+            })
 
-    xlim_upper = 0.3
-    ylim_upper = 330
-    if show_extrapolation:
-        xlim_upper = np.max([np.max(i['extrapolated_strain']) for i in hardening_data.values()])
-        ylim_upper = np.max([np.max(i['extrapolated_stress']) for i in hardening_data.values()]) / 1e6
+    fig = graph_objects.FigureWidget(
+        data=plt_data,
+        layout={
+            'template': 'simple_white',
+            'xaxis': {
+                'mirror': 'ticks',
+                'ticks': 'inside',
+                'title': {
+                    'text': r'Von Mises true plastic strain, \strainVM{{}}',
+                    'font': {
+                        'size': 12,
+                    },
+                },                
+            },
+            'yaxis': {
+                'anchor': 'x',
+                'ticks': 'inside',
+                'title': {
+                    'text': r'Von Mises true stress, \stressVM{} (\MPa{})',
+                    'font': {
+                        'size': 12,
+                    },
+                },
+            },
+            'yaxis2': {
+                'anchor': 'x',
+                'side': 'right',
+                'overlaying': 'y',            
+                'range': [0, 2.5],
+            },
+            'legend': {
+                'x': 0.80,
+                'y': 0.5,
+                'xanchor': 'right',
+                'yanchor': 'middle',
+                'tracegroupgap': 0,
+            },
+            **layout_args,            
+        }
+    )
+    
+    return fig
+
+
+def show_work_hardening(hardening_data, layout_args=None):
+    """Plot Von Mises stress-strain data and work hardening rate curves from simulations."""
+    
+    layout_args = layout_args or {}
+    LEGEND_NAMES = {
+        'uniaxial': 'Uniaxial',
+        'plane_strain': 'Plane strain',
+        'biaxial': 'Biaxial',
+        'equi_biaxial': 'Equi-biaxial',
+    }    
+    plt_data = []
+    for strain_path_idx, (strain_path, hard_data) in enumerate(hardening_data.items()):
+        
+        legend_data = {
+            'name': LEGEND_NAMES[strain_path],
+            'legendgroup': LEGEND_NAMES[strain_path],            
+        }
+        plt_data.extend([
+            {
+                'x': hard_data['strain_vM_plastic'],
+                'y': hard_data['stress_vM_smooth'] / 1e6,
+                'xaxis': 'x1',
+                'yaxis': 'y1',
+                'text': np.arange(hard_data['strain_vM_plastic'].size),
+                'line': {
+                    'width': 1,
+                    'color': qualitative.D3[strain_path_idx],
+                },
+                'showlegend': True,
+                **legend_data,
+            },
+            {
+                'x': hard_data['strain_vM_total'][:-3],
+                'y': hard_data['work_hardening_rate'][:hard_data['strain_vM_total'].size - 3] / 1e9,
+                'xaxis': 'x1',
+                'yaxis': 'y2',
+                'text': np.arange(hard_data['strain_vM_plastic_extrap'].size),
+                'line': {
+                    'width': 1,
+                    'color': qualitative.D3[strain_path_idx],
+                    'dash': 'dot',
+                },
+                'showlegend': False,
+                **legend_data,                
+            },
+        ])
+    
     layout = {
         'width': 400,
         'height': 350,
         'margin': {'t': 20, 'b': 20, 'l': 20, 'r': 20},
         'template': 'simple_white',
         'xaxis': {
-            'range': [-0.01, xlim_upper],
+            'range': [-0.01, 0.3],
             'mirror': 'ticks',
             'ticks': 'inside',
+            'dtick': 0.1,
+            'tickformat': '.1f',            
             'title': {
-                'text': rf'Von Mises true {"plastic " if plastic_strain else ""}strain, \strainVM{{}}',
+                'text': r'Von Mises true strain, \strainVM{{}}',
                 'font': {
                     'size': 12,
                 },
@@ -504,7 +583,7 @@ def show_hardening(hardening_data, plastic_strain=False, show_interpolation=Fals
         'yaxis': {
             'anchor': 'x',
             'ticks': 'inside',
-            'range': [0, ylim_upper],
+            'range': [0, 330],            
             'title': {
                 'text': r'Von Mises true stress, \stressVM{} (\MPa{})',
                 'font': {
@@ -516,6 +595,7 @@ def show_hardening(hardening_data, plastic_strain=False, show_interpolation=Fals
             'anchor': 'x',
             'side': 'right',
             'overlaying': 'y',
+            'tickformat': '.1f',
             'title': {
                 'text': r'Work hardening rate (\GPa{})',
                 'font': {
@@ -531,22 +611,15 @@ def show_hardening(hardening_data, plastic_strain=False, show_interpolation=Fals
             'xanchor': 'right',
             'yanchor': 'middle',
             'tracegroupgap': 0,
-            # 'bgcolor': 'rgb(250, 250, 250)',
         },
         **layout_args,
     }
-
-    if fix_scales:
-        layout['xaxis'].update({
-            'dtick': 0.1,
-            'tickformat': '.1f',
-        })
-        layout['yaxis2'].update({
-            'tickformat': '.1f',
-        })
-    fig = graph_objects.FigureWidget(data=plot_data, layout=layout)
+    fig = graph_objects.FigureWidget(
+        data=plt_data,
+        layout=layout
+    )    
+    
     return fig
-
 
 def show_plastic_stress_strain_data(hardening_data):
     interpolated_hardening_data = []
