@@ -625,8 +625,8 @@ def show_plastic_stress_strain_data(hardening_data):
     interpolated_hardening_data = []
     column_headers = []
     for k, v in hardening_data.items():
-        interpolated_hardening_data.append(np.concatenate((v['interpolated_strain'], v['extrapolated_strain'])))
-        interpolated_hardening_data.append(np.concatenate((v['interpolated_stress'], v['extrapolated_stress'])))
+        interpolated_hardening_data.append(v['strain_vM_plastic_extrap_subset'])
+        interpolated_hardening_data.append(v['stress_vM_smooth_extrap_subset'])
         column_headers.extend([(k, 'strain'), (k, 'stress')])
     interpolated_hardening_data = np.array(interpolated_hardening_data)
     df = pd.DataFrame(data=interpolated_hardening_data.T,
