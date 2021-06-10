@@ -1,16 +1,16 @@
 tensile_tests:
     url: https://sandbox.zenodo.org/record/779690/files/tensile_tests.zip
-    md5: 26a03e24dcf4d055e0e9e79e0937036c 
+    md5: 26a03e24dcf4d055e0e9e79e0937036c
     name: tensile_tests.zip
 nakazima_tests:
     url: https://sandbox.zenodo.org/record/794629/files/nakazima.zip
-    md5: 3ef18432ea259c13d3ad26c387644aba   
+    md5: 3ef18432ea259c13d3ad26c387644aba
     name: nakazima.zip
 modelling_workflows:
     make_volume_element:
         workflow_YAML_spec:
             url: https://sandbox.zenodo.org/record/836840/files/1_make_volume_element.yml
-            md5: ddc4e46fad5a9e265b351e8f446f1cd8        
+            md5: ddc4e46fad5a9e265b351e8f446f1cd8
         workflow_HDF5_file:
             url: https://sandbox.zenodo.org/record/836840/files/workflow.hdf5
             md5: 7cd57bef40d02afcbaeea04750e31159
@@ -42,5 +42,24 @@ modelling_workflows:
         workflow_HDF5_file:
             url: https://sandbox.zenodo.org/record/836922/files/workflow.hdf5
             md5: 53bc248bfdfef431722fc1a8b8a66ad7
-
-
+    generate_random_RVE:
+        workflow_YAML_spec:
+            url: https://sandbox.zenodo.org/record/856127/files/6_make_random_RVE.yml
+            md5: 0aa9ff88a498f1723b4f3b6a34073a1f 
+        workflow_HDF5_file:
+            url: https://sandbox.zenodo.org/record/856127/files/workflow.hdf5
+            md5: dd01b204df511fba6501aa9c96e8776a
+    simulate_uniaxial_tension_surfalex:
+        workflow_YAML_spec:
+            url: https://sandbox.zenodo.org/record/856129/files/7A_simulate_uniaxial_tension.yml
+            md5: 08b738c2f8c4ee3205e87ee5fdb8fdbd
+        workflow_HDF5_file:
+            url: https://sandbox.zenodo.org/record/856129/files/workflow.hdf5
+            md5: 891fb854bffb91c36d97fc33d30e53cf
+    simulate_uniaxial_tension_random:
+        workflow_YAML_spec:
+            url: https://sandbox.zenodo.org/record/856131/files/7B_simulate_uniaxial_tension.yml
+            md5: 49d651bc4ca115297c092056b15a69df
+        workflow_HDF5_file:
+            url: https://sandbox.zenodo.org/record/856131/files/workflow.hdf5
+            md5: b165b24d3236c94fff249a44b5e2cdc3
