@@ -284,7 +284,8 @@ def show_all_fitted_yield_function_parameters(all_load_responses):
                                                                    ].values[0, i['YPC_value_idx']]
             yld_func_type_fitted_params.append(
                 {'yield_point': yld_point, **i['yield_function'].get_parameters()})
-        all_fitted_params.update({i['yield_function'].name: yld_func_type_fitted_params})
+        all_fitted_params.update(
+            {i['yield_function'].name: yld_func_type_fitted_params})
 
     tab_children = []
     tab_titles = []
@@ -305,9 +306,9 @@ def show_all_fitted_yield_function_parameters(all_load_responses):
 
 
 def collect_hardening_data(sim_tasks, yield_stress, extrapolation_mode='constant_hardening',
-                            extrapolate_to_strain=0.5, linear_fit_num=100,
-                            plastic_table_strain_interval=2e-3):
-    
+                           extrapolate_to_strain=0.5, linear_fit_num=100,
+                           plastic_table_strain_interval=2e-3):
+
     hardening_data = {}
     for strain_path, sim_task in sim_tasks.items():
         vol_elem_response = sim_task.elements[0].outputs.volume_element_response
@@ -317,7 +318,8 @@ def collect_hardening_data(sim_tasks, yield_stress, extrapolation_mode='constant
 
         # Smooth oscillations in stress for higher strains:
         smooth_idx = np.where(strain_vM_total > 0.15)[0][0]
-        lowess_out = lowess(stress_vM, strain_vM_total, is_sorted=True, frac=0.025, it=0, return_sorted=False)
+        lowess_out = lowess(stress_vM, strain_vM_total,
+                            is_sorted=True, frac=0.025, it=0, return_sorted=False)
         stress_vM_smooth = np.concatenate((
             stress_vM[:smooth_idx],
             lowess_out[smooth_idx:]
@@ -325,7 +327,8 @@ def collect_hardening_data(sim_tasks, yield_stress, extrapolation_mode='constant
 
         # Extrapolate (strain_vM_plastic, stress_vM_smooth):
         if extrapolation_mode == 'constant_stress':
-            add_strain = np.linspace(strain_vM_plastic[-1], extrapolate_to_strain, 1000)
+            add_strain = np.linspace(
+                strain_vM_plastic[-1], extrapolate_to_strain, 1000)
             add_stress = np.zeros_like(add_strain) + stress_vM_smooth[-1]
 
         elif extrapolation_mode == 'final_work_hardening_rate':
@@ -335,7 +338,8 @@ def collect_hardening_data(sim_tasks, yield_stress, extrapolation_mode='constant
                 strain_vM_plastic[-linear_fit_num:],
                 stress_vM_smooth[-linear_fit_num:],
             )
-            add_strain = np.linspace(strain_vM_plastic[-1], extrapolate_to_strain, 1000)
+            add_strain = np.linspace(
+                strain_vM_plastic[-1], extrapolate_to_strain, 1000)
             add_stress = linear_model(add_strain, linear_m, linear_c)
 
         elif isinstance(extrapolation_mode, (float, int)):
@@ -343,15 +347,20 @@ def collect_hardening_data(sim_tasks, yield_stress, extrapolation_mode='constant
             known_point = (strain_vM_plastic[-1], stress_vM_smooth[-1])
             linear_m = extrapolation_mode
             linear_c = known_point[1] - (linear_m * known_point[0])
-            add_strain = np.linspace(strain_vM_plastic[-1], extrapolate_to_strain, 1000)
-            add_stress = linear_model(add_strain, linear_m, linear_c)        
+            add_strain = np.linspace(
+                strain_vM_plastic[-1], extrapolate_to_strain, 1000)
+            add_stress = linear_model(add_strain, linear_m, linear_c)
         else:
-            raise NotImplementedError(f'Unknown `extrapolation_mode`: {extrapolation_mode}')
+            raise NotImplementedError(
+                f'Unknown `extrapolation_mode`: {extrapolation_mode}')
 
-        strain_vM_plastic_extrap = np.concatenate((strain_vM_plastic, add_strain[1:]))
-        stress_vM_smooth_extrap = np.concatenate((stress_vM_smooth, add_stress[1:]))    
-        work_hardening_rate = np.gradient(stress_vM_smooth_extrap, strain_vM_plastic_extrap)
-    
+        strain_vM_plastic_extrap = np.concatenate(
+            (strain_vM_plastic, add_strain[1:]))
+        stress_vM_smooth_extrap = np.concatenate(
+            (stress_vM_smooth, add_stress[1:]))
+        work_hardening_rate = np.gradient(
+            stress_vM_smooth_extrap, strain_vM_plastic_extrap)
+
         # Skip transition point to smoothed data:
         work_hardening_rate = np.concatenate((
             work_hardening_rate[:(smooth_idx - 1)],
@@ -359,16 +368,18 @@ def collect_hardening_data(sim_tasks, yield_stress, extrapolation_mode='constant
         ))
 
         # Interpolate a subset of (strain_vM_plastic_extrap, stress_vM_smooth_extrap) for FE plastic table:
-        plastic_table_size = int(extrapolate_to_strain / plastic_table_strain_interval)
-        strain_vM_plastic_extrap_subset = np.linspace(0, extrapolate_to_strain, num=plastic_table_size)
+        plastic_table_size = int(
+            extrapolate_to_strain / plastic_table_strain_interval)
+        strain_vM_plastic_extrap_subset = np.linspace(
+            0, extrapolate_to_strain, num=plastic_table_size)
         stress_vM_smooth_extrap_subset = np.interp(
             strain_vM_plastic_extrap_subset,
             strain_vM_plastic_extrap,
             stress_vM_smooth_extrap,
         )
         # Set the first interpolation value (zero-strain) to the approximate yield stress:
-        stress_vM_smooth_extrap_subset[0] = yield_stress    
-        
+        stress_vM_smooth_extrap_subset[0] = yield_stress
+
         hardening_data[strain_path] = {
             'strain_vM_total': strain_vM_total,
             'strain_vM_plastic': strain_vM_plastic,
@@ -377,8 +388,10 @@ def collect_hardening_data(sim_tasks, yield_stress, extrapolation_mode='constant
             'strain_vM_plastic_extrap': strain_vM_plastic_extrap,
             'stress_vM_smooth_extrap': stress_vM_smooth_extrap,
             'work_hardening_rate': work_hardening_rate,
-            'strain_vM_plastic_extrap_subset': strain_vM_plastic_extrap_subset, # for FE sim plastic table
-            'stress_vM_smooth_extrap_subset': stress_vM_smooth_extrap_subset, # for FE sim plastic table            
+            # for FE sim plastic table:
+            'strain_vM_plastic_extrap_subset': strain_vM_plastic_extrap_subset,
+            # for FE sim plastic table:
+            'stress_vM_smooth_extrap_subset': stress_vM_smooth_extrap_subset,
             'yield_stress': yield_stress,
             'extrapolation_mode': extrapolation_mode,
             'extrapolate_to_strain': extrapolate_to_strain,
@@ -386,28 +399,29 @@ def collect_hardening_data(sim_tasks, yield_stress, extrapolation_mode='constant
             'plastic_table_strain_interval': plastic_table_strain_interval,
             'plastic_table_size': plastic_table_size,
         }
-    
+
     return hardening_data
+
 
 def show_work_hardening_extrapolated(hardening_data, show_interpolation=True, show_non_extrapolated_stress=False,
                                      layout_args=None):
     """Plot Von Mises stress-plastic-strain extrapolated data and work hardening rate curves from simulations."""
-    
+
     layout_args = layout_args or {}
     LEGEND_NAMES = {
         'uniaxial': 'Uniaxial',
         'plane_strain': 'Plane strain',
         'biaxial': 'Biaxial',
         'equi_biaxial': 'Equi-biaxial',
-    }    
+    }
     plt_data = []
     for strain_path_idx, (strain_path, hard_data) in enumerate(hardening_data.items()):
-        
+
         legend_data = {
             'name': LEGEND_NAMES[strain_path],
-            'legendgroup': LEGEND_NAMES[strain_path],            
+            'legendgroup': LEGEND_NAMES[strain_path],
         }
-        
+
         if show_interpolation:
             # Show the subset of data used to generate the FE plastic tables:
             plt_data.append({
@@ -415,7 +429,7 @@ def show_work_hardening_extrapolated(hardening_data, show_interpolation=True, sh
                 'y': hard_data['stress_vM_smooth_extrap_subset'],
                 'xaxis': 'x1',
                 'yaxis': 'y1',
-                'text': np.arange(hard_data['strain_vM_plastic_extrap'].size),            
+                'text': np.arange(hard_data['strain_vM_plastic_extrap'].size),
                 'mode': 'markers',
                 'marker': {
                     'color': qualitative.D3[strain_path_idx],
@@ -425,8 +439,8 @@ def show_work_hardening_extrapolated(hardening_data, show_interpolation=True, sh
                 'showlegend': False,
                 **legend_data,
             })
-        
-        plt_data.extend([                    
+
+        plt_data.extend([
             {
                 'x': hard_data['strain_vM_plastic_extrap'],
                 'y': hard_data['stress_vM_smooth_extrap'],
@@ -438,7 +452,7 @@ def show_work_hardening_extrapolated(hardening_data, show_interpolation=True, sh
                     'color': qualitative.D3[strain_path_idx],
                 },
                 'showlegend': True,
-                **legend_data,                           
+                **legend_data,
             },
             {
                 'x': hard_data['strain_vM_plastic_extrap'],
@@ -451,11 +465,11 @@ def show_work_hardening_extrapolated(hardening_data, show_interpolation=True, sh
                     'color': qualitative.D3[strain_path_idx],
                 },
                 'showlegend': False,
-                **legend_data,                
+                **legend_data,
             },
         ])
-        
-        if show_non_extrapolated_stress: 
+
+        if show_non_extrapolated_stress:
             plt_data.append({
                 'x': hard_data['strain_vM_plastic'],
                 'y': hard_data['stress_vM_smooth'],
@@ -482,7 +496,7 @@ def show_work_hardening_extrapolated(hardening_data, show_interpolation=True, sh
                     'font': {
                         'size': 12,
                     },
-                },                
+                },
             },
             'yaxis': {
                 'anchor': 'x',
@@ -497,13 +511,13 @@ def show_work_hardening_extrapolated(hardening_data, show_interpolation=True, sh
             'yaxis2': {
                 'anchor': 'x',
                 'side': 'right',
-                'overlaying': 'y',            
+                'overlaying': 'y',
                 'range': [0, 2.5],
                 'title': {
                     'text': r'Work hardening rate (\GPa{})',
                     'font': {
                         'size': 12,
-                    },                    
+                    },
                 }
             },
             'legend': {
@@ -513,29 +527,29 @@ def show_work_hardening_extrapolated(hardening_data, show_interpolation=True, sh
                 'yanchor': 'middle',
                 'tracegroupgap': 0,
             },
-            **layout_args,            
+            **layout_args,
         }
     )
-    
+
     return fig
 
 
 def show_work_hardening(hardening_data, layout_args=None):
     """Plot Von Mises stress-strain data and work hardening rate curves from simulations."""
-    
+
     layout_args = layout_args or {}
     LEGEND_NAMES = {
         'uniaxial': 'Uniaxial',
         'plane_strain': 'Plane strain',
         'biaxial': 'Biaxial',
         'equi_biaxial': 'Equi-biaxial',
-    }    
+    }
     plt_data = []
     for strain_path_idx, (strain_path, hard_data) in enumerate(hardening_data.items()):
-        
+
         legend_data = {
             'name': LEGEND_NAMES[strain_path],
-            'legendgroup': LEGEND_NAMES[strain_path],            
+            'legendgroup': LEGEND_NAMES[strain_path],
         }
         plt_data.extend([
             {
@@ -563,10 +577,10 @@ def show_work_hardening(hardening_data, layout_args=None):
                     'dash': 'dot',
                 },
                 'showlegend': False,
-                **legend_data,                
+                **legend_data,
             },
         ])
-    
+
     layout = {
         'width': 400,
         'height': 350,
@@ -577,7 +591,7 @@ def show_work_hardening(hardening_data, layout_args=None):
             'mirror': 'ticks',
             'ticks': 'inside',
             'dtick': 0.1,
-            'tickformat': '.1f',            
+            'tickformat': '.1f',
             'title': {
                 'text': r'Von Mises true strain, \strainVM{{}}',
                 'font': {
@@ -589,13 +603,13 @@ def show_work_hardening(hardening_data, layout_args=None):
         'yaxis': {
             'anchor': 'x',
             'ticks': 'inside',
-            'range': [0, 330],            
+            'range': [0, 330],
             'title': {
                 'text': r'Von Mises true stress, \stressVM{} (\MPa{})',
                 'font': {
                     'size': 12,
                 },
-            },            
+            },
         },
         'yaxis2': {
             'anchor': 'x',
@@ -607,7 +621,7 @@ def show_work_hardening(hardening_data, layout_args=None):
                 'font': {
                     'size': 12,
                 },
-            },            
+            },
             'range': [0, 2.5],
             'ticks': 'inside',
         },
@@ -623,15 +637,17 @@ def show_work_hardening(hardening_data, layout_args=None):
     fig = graph_objects.FigureWidget(
         data=plt_data,
         layout=layout
-    )    
-    
+    )
+
     return fig
+
 
 def show_plastic_stress_strain_data(hardening_data):
     interpolated_hardening_data = []
     column_headers = []
     for k, v in hardening_data.items():
-        interpolated_hardening_data.append(v['strain_vM_plastic_extrap_subset'])
+        interpolated_hardening_data.append(
+            v['strain_vM_plastic_extrap_subset'])
         interpolated_hardening_data.append(v['stress_vM_smooth_extrap_subset'])
         column_headers.extend([(k, 'strain'), (k, 'stress')])
     interpolated_hardening_data = np.array(interpolated_hardening_data)
@@ -660,21 +676,21 @@ def get_latex_yield_func_params(yield_func_name, yield_func_param_vals, val_form
                 new_k = f'\\yldFuncLinTransComp{{\\myprime}}{{{k[-2:]}}}'
             elif '_dp_' in k:
                 new_k = f'\\yldFuncLinTransComp{{\\mydprime}}{{{k[-2:]}}}'
-            elif k == 'exponent': 
+            elif k == 'exponent':
                 new_k = '\\yldFuncExp{}'
             else:
                 raise ValueError(k)
             latex_keys.append(new_k)
 
         elif yield_func_name == 'Barlat_Yld91':
-            if k == 'exponent': 
+            if k == 'exponent':
                 new_k = '\\yldFuncExp{}'
             else:
                 new_k = f'${k.upper()}$'
             latex_keys.append(new_k)
 
         elif yield_func_name == 'Hill1948':
-            if k == 'exponent': 
+            if k == 'exponent':
                 continue
             new_k = '$' + k + '_\\mathrm{h}$'
             latex_keys.append(new_k)
@@ -940,19 +956,22 @@ def plot_strain_paths_to_necking_plotly(strain_at_necking, sample_sizes):
 def linear_model(x, m, c):
     return m*x + c
 
+
 def get_yield_function_fitting_error(all_load_responses, yield_function_idx):
-    
+
     error_data = {}
     for idx, load_resp in enumerate(all_load_responses):
-        abs_residual = np.abs(load_resp.fitted_yield_functions[yield_function_idx]['yield_function'].fit_info.fun)
+        abs_residual = np.abs(
+            load_resp.fitted_yield_functions[yield_function_idx]['yield_function'].fit_info.fun)
         name = load_resp.fitted_yield_functions[yield_function_idx]['yield_function'].name
         error_data.update({name: abs_residual})
-        
+
     return error_data
+
 
 def show_yield_function_fitting_error(all_load_responses, yield_function_idx, layout_args=None):
     """Plot the yield function fitting residual at the optimised solution."""
-        
+
     legend_names = {
         'Hill1948': 'Hill 1948',
         'Barlat_Yld91': 'Bar.\ Yld91',
@@ -960,7 +979,8 @@ def show_yield_function_fitting_error(all_load_responses, yield_function_idx, la
     }
 
     plt_data = []
-    err_data = get_yield_function_fitting_error(all_load_responses, yield_function_idx)
+    err_data = get_yield_function_fitting_error(
+        all_load_responses, yield_function_idx)
     for idx, (name, err_data) in enumerate(err_data.items()):
         load_resp = all_load_responses[idx]
         plt_data.append({
@@ -974,7 +994,7 @@ def show_yield_function_fitting_error(all_load_responses, yield_function_idx, la
             },
             'name': legend_names.get(name, name),
         })
-        
+
     layout = {
         'template': 'simple_white',
         'width': 280,
@@ -984,16 +1004,16 @@ def show_yield_function_fitting_error(all_load_responses, yield_function_idx, la
             'title': {
                 'text': r'\yldFuncResidualXLab{}',
             },
-            'dtick': 0.01 * 1e2,            
+            'dtick': 0.01 * 1e2,
             'mirror': 'ticks',
-            'ticks': 'inside',            
+            'ticks': 'inside',
         },
         'yaxis': {
             'title': {
                 'text': 'Number of stress states',
             },
             'mirror': 'ticks',
-            'ticks': 'inside',             
+            'ticks': 'inside',
         },
         'legend': {
             'x': 0.3,
@@ -1002,7 +1022,7 @@ def show_yield_function_fitting_error(all_load_responses, yield_function_idx, la
             'yanchor': 'top',
             'bgcolor': 'rgba(255, 255, 255, 0)',
             'tracegroupgap': 0,
-        }        
+        }
     }
     fig = graph_objects.FigureWidget(
         data=plt_data,
@@ -1010,10 +1030,14 @@ def show_yield_function_fitting_error(all_load_responses, yield_function_idx, la
     )
     return fig
 
+
 def plot_yield_function_exponent_evolution(all_fitted_params):
-    barlat_18p_exp_evo = [i['exponent'] for i in all_fitted_params['Barlat_Yld2004_18p']]
-    barlat_6p_exp_evo = [i['exponent'] for i in all_fitted_params['Barlat_Yld91']]
-    yield_points = [i['yield_point'] for i in all_fitted_params['Barlat_Yld2004_18p']]    
+    barlat_18p_exp_evo = [i['exponent']
+                          for i in all_fitted_params['Barlat_Yld2004_18p']]
+    barlat_6p_exp_evo = [i['exponent']
+                         for i in all_fitted_params['Barlat_Yld91']]
+    yield_points = [i['yield_point']
+                    for i in all_fitted_params['Barlat_Yld2004_18p']]
     fig = graph_objects.FigureWidget(
         data=[
             {
@@ -1023,14 +1047,14 @@ def plot_yield_function_exponent_evolution(all_fitted_params):
                 'line': {
                     'color': qualitative.D3[1],
                 },
-            },            
+            },
             {
                 'x': yield_points,
                 'y': barlat_18p_exp_evo,
                 'name': 'Barlat Yld2004-18p',
                 'line': {
                     'color': qualitative.D3[2],
-                },                
+                },
             },
         ],
         layout={
@@ -1040,10 +1064,11 @@ def plot_yield_function_exponent_evolution(all_fitted_params):
     )
     return fig
 
+
 def get_strain_ratios(vol_avg_def_grad, sheet_dirs=None):
     """Get the RVE strains and the Lankford coefficient from the volume-averaged
     deformation gradient, using the diagonal components of the Green strain.
-    
+
     Parameters
     ----------
     vol_avg_def_grad : ndarray of shape (N, 3, 3)
@@ -1051,52 +1076,54 @@ def get_strain_ratios(vol_avg_def_grad, sheet_dirs=None):
     sheet_dirs : dict of (str: str), optional
         Dict assigning each Cartesian direction to RD/TD/ND. If None,
         "x" will be assigned to "RD", "y" to "TD" and "z" to "ND".
-               
+
     """
-    
+
     if not sheet_dirs:
         sheet_dirs = {
             'x': 'RD',
             'y': 'TD',
             'z': 'ND',
         }
-        
+
     sheet_dirs_inv = {v: k for k, v in sheet_dirs.items()}
     cart_dirs = ['x', 'y', 'z']
-    sheet_dir_idx = {i: cart_dirs.index(sheet_dirs_inv[i]) for i in sheet_dirs.values()}
-    
+    sheet_dir_idx = {i: cart_dirs.index(
+        sheet_dirs_inv[i]) for i in sheet_dirs.values()}
+
     F = vol_avg_def_grad
     F_T = np.transpose(F, (0, 2, 1))
     green_strain = 0.5 * ((F_T @ F) - np.eye(3))
-    
+
     strain_thick = green_strain[:, sheet_dir_idx['ND'], sheet_dir_idx['ND']]
     strain_trans = green_strain[:, sheet_dir_idx['TD'], sheet_dir_idx['TD']]
     strain_long = green_strain[:, sheet_dir_idx['RD'], sheet_dir_idx['RD']]
-    
+
     true_strain_trans = np.log(strain_trans[1:] + 1)
     true_strain_long = np.log(strain_long[1:] + 1)
-    true_strain_thick = np.log(strain_thick[1:] + 1)    
+    true_strain_thick = np.log(strain_thick[1:] + 1)
     true_strain_vol = true_strain_trans + true_strain_long + true_strain_thick
-    
-    lankford = true_strain_trans / -(true_strain_long + true_strain_trans)    
+
+    lankford = true_strain_trans / -(true_strain_long + true_strain_trans)
     # lankford = true_strain_trans / true_strain_thick
-    
+
     out = {
         'strain_thick': strain_thick,
         'strain_trans': strain_trans,
         'strain_long': strain_long,
         'strain_vol': true_strain_vol,
-        'lankford': lankford,        
+        'lankford': lankford,
     }
     return out
 
+
 def get_simulated_lankford_parameter(workflow):
 
-    sim_elem = workflow.tasks.simulate_volume_element_loading.elements[0]    
-    vol_avg_def_grad = sim_elem.outputs.volume_element_response['vol_avg_def_grad']['data']        
-    true_strain = sim_elem.outputs.volume_element_response['vol_avg_equivalent_strain']['data']        
+    sim_elem = workflow.tasks.simulate_volume_element_loading.elements[0]
+    vol_avg_def_grad = sim_elem.outputs.volume_element_response['vol_avg_def_grad']['data']
+    true_strain = sim_elem.outputs.volume_element_response['vol_avg_equivalent_strain']['data']
     lankford = get_strain_ratios(vol_avg_def_grad)['lankford']
-    
+
     return (true_strain, lankford)
 
 
@@ -1111,7 +1138,7 @@ def plot_lankford_parameter_comparison(lankford_parameter_evolution):
                 'color': 'black' if 'Random' in name else ('blue' if 'Surfalex' in name else (qualitative.D3[idx // 2])),
                 'dash': ('dot' if idx % 2 == 0 else 'solid') if 'Simulated' not in name else 'dashdot',
                 'width': 1.2,
-            },            
+            },
         }
         for idx, (name, (true_strain, R)) in enumerate(lankford_parameter_evolution.items())
     ]
@@ -1120,7 +1147,7 @@ def plot_lankford_parameter_comparison(lankford_parameter_evolution):
         data=plt_data,
         layout={
             'margin': {'t': 20, 'b': 20, 'l': 20, 'r': 20},
-            'template': 'simple_white',            
+            'template': 'simple_white',
             'xaxis': {
                 'title': 'True strain',
                 'mirror': 'ticks',
@@ -1136,6 +1163,7 @@ def plot_lankford_parameter_comparison(lankford_parameter_evolution):
         },
     )
     return fig
+
 
 def plot_static_figure_stress_strain_curves(cropped_voltage_data):
     fig = graph_objects.FigureWidget(
@@ -1155,14 +1183,14 @@ def plot_static_figure_stress_strain_curves(cropped_voltage_data):
             'width': 280,
             'height': 250,
             'margin': {'t': 20, 'b': 20, 'l': 20, 'r': 20},
-            'template': 'simple_white',            
+            'template': 'simple_white',
             'xaxis': {
                 'title': 'True strain, \strain{}',
                 'mirror': 'ticks',
                 'ticks': 'inside',
                 'range': [-0.01, 0.35],
                 'dtick': 0.10,
-                'tickformat': '.1f',                
+                'tickformat': '.1f',
             },
             'yaxis': {
                 'title': 'True stress, \stress{} (\MPa)',
