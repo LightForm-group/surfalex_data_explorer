@@ -1,10 +1,10 @@
 tensile_tests:
-    url: https://sandbox.zenodo.org/record/779690/files/tensile_tests.zip
-    md5: 26a03e24dcf4d055e0e9e79e0937036c
+    url: https://zenodo.org/record/4926424/files/tensile_tests.zip
+    md5: cdcefdfb8f70bf40ec5ae8b8144ac9d2  
     name: tensile_tests.zip
 nakazima_tests:
-    url: https://sandbox.zenodo.org/record/794629/files/nakazima.zip
-    md5: 3ef18432ea259c13d3ad26c387644aba
+    url: https://zenodo.org/record/4926357/files/nakazima.zip
+    md5: 5606b4f466cd71615634e56ff32d804f    
     name: nakazima.zip
 modelling_workflows:
     make_volume_element:
