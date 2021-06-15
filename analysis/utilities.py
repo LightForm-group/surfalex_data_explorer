@@ -545,7 +545,7 @@ def get_extrapolation_mode_plot_data(strain_path, strain_path_idx, hard_data,
                                      extrapolation_type, legend_names, show_interpolation,
                                      show_non_extrapolated_stress, show_fitted_data):
 
-    hard_data = [i for i in hard_data['extrapolated_data']
+    hard_data_extrap = [i for i in hard_data['extrapolated_data']
                  if i['extrapolation']['type'] == extrapolation_type][0]
 
     legend_data = {
@@ -556,11 +556,11 @@ def get_extrapolation_mode_plot_data(strain_path, strain_path_idx, hard_data,
     if show_interpolation:
         # Show the subset of data used to generate the FE plastic tables:
         plt_data.append({
-            'x': hard_data['strain_vM_plastic_extrap_subset'],
-            'y': hard_data['stress_vM_smooth_extrap_subset'] / 1e6,
+            'x': hard_data_extrap['strain_vM_plastic_extrap_subset'],
+            'y': hard_data_extrap['stress_vM_smooth_extrap_subset'] / 1e6,
             'xaxis': 'x1',
             'yaxis': 'y1',
-            'text': np.arange(hard_data['strain_vM_plastic_extrap'].size),
+            'text': np.arange(hard_data_extrap['strain_vM_plastic_extrap'].size),
             'mode': 'markers',
             'marker': {
                 'color': qualitative.D3[strain_path_idx],
@@ -573,11 +573,11 @@ def get_extrapolation_mode_plot_data(strain_path, strain_path_idx, hard_data,
 
     plt_data.extend([
         {
-            'x': hard_data['strain_vM_plastic_extrap'],
-            'y': hard_data['stress_vM_smooth_extrap'] / 1e6,
+            'x': hard_data_extrap['strain_vM_plastic_extrap'],
+            'y': hard_data_extrap['stress_vM_smooth_extrap'] / 1e6,
             'xaxis': 'x1',
             'yaxis': 'y1',
-            'text': np.arange(hard_data['strain_vM_plastic_extrap'].size),
+            'text': np.arange(hard_data_extrap['strain_vM_plastic_extrap'].size),
             'line': {
                 'width': 1,
                 'color': qualitative.D3[strain_path_idx],
@@ -586,11 +586,11 @@ def get_extrapolation_mode_plot_data(strain_path, strain_path_idx, hard_data,
             **legend_data,
         },
         {
-            'x': hard_data['strain_vM_plastic_extrap'],
-            'y': hard_data['work_hardening_rate'] / 1e9,
+            'x': hard_data_extrap['strain_vM_plastic_extrap'],
+            'y': hard_data_extrap['work_hardening_rate'] / 1e9,
             'xaxis': 'x1',
             'yaxis': 'y2',
-            'text': np.arange(hard_data['strain_vM_plastic_extrap'].size),
+            'text': np.arange(hard_data_extrap['strain_vM_plastic_extrap'].size),
             'line': {
                 'width': 1,
                 'color': qualitative.D3[strain_path_idx],
@@ -617,15 +617,18 @@ def get_extrapolation_mode_plot_data(strain_path, strain_path_idx, hard_data,
 
     if show_fitted_data:
         # If the extrapolation required a fit, show the fit data as well:
+        x = hard_data_extrap.get('strain_vM_plastic_fit', [])
+        y = hard_data_extrap.get('stress_vM_smooth_fit')        
         plt_data.append({
-            'x': hard_data['strain_vM_plastic_fit'],
-            'y': hard_data['stress_vM_smooth_fit'] / 1e6,
+            'x': x,
+            'y': y / 1e6 if y is not None else [],
             'xaxis': 'x1',
             'yaxis': 'y1',
-            'text': np.arange(hard_data['strain_vM_plastic'].size),
+            'text': np.arange(hard_data_extrap['strain_vM_plastic_fit'].size) if y is not None else [],
             'line': {
                 'dash': 'dash',
                 'color': qualitative.D3[strain_path_idx],
+                'width': 2,
             },
             'showlegend': False,
             **legend_data,
