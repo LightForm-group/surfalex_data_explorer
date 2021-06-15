@@ -22,6 +22,9 @@ STRAIN_PATH_LEGEND_NAMES = {
     'uniaxial': 'Uniaxial',
     'plane_strain': 'Plane strain',
     'biaxial': 'Biaxial',
+    'biaxial_1': 'Biaxial 1',
+    'biaxial_2': 'Biaxial 2',
+    'biaxial_3': 'Biaxial 3',
     'equi_biaxial': 'Equi-biaxial',
 }
 
