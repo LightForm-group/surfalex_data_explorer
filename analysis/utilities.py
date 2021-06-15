@@ -429,6 +429,7 @@ def collect_hardening_data(sim_tasks, yield_stress, extrapolations=None,
                     hardening_power_law,
                     strain_vM_plastic_fit,
                     stress_vM_smooth[fit_idx],
+                    p0=(100e6, 1),
                 )
                 # Separately get the fitted data:
                 stress_vM_smooth_fit = hardening_power_law(
