@@ -460,8 +460,6 @@ def collect_hardening_data(sim_tasks, yield_stress, extrapolations=None,
                         (strain_vM_plastic[:overlap_idx], new_strain[1:]))
                     stress_vM_smooth_extrap = np.concatenate(
                         (stress_vM_smooth[:overlap_idx], new_stress[1:]))                        
-                    (stress_vM_smooth[:overlap_idx], new_stress[1:]))
-                        (stress_vM_smooth[:overlap_idx], new_stress[1:]))                        
                 else:
                     add_strain = np.linspace(strain_vM_plastic[-1], extrap_to_strain, 1000)
                     add_stress = hardening_power_law(add_strain, power_law_K, power_law_exp)
