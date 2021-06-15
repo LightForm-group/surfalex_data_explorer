@@ -434,32 +434,36 @@ def collect_hardening_data(sim_tasks, yield_stress, extrapolations=None,
                 stress_vM_smooth_fit = hardening_power_law(
                     strain_vM_plastic_fit, power_law_K, power_law_exp)
 
-                # For a smooth transition, take the fit back to the point at which it is within
-                # some threshold of the input data:
+                if extrap.get('smooth_transition', True):
+                    # For a smooth transition, take the fit back to the point at which it is within
+                    # some threshold of the input data:
 
-                OVERLAP_THRESHOLD = 0.01e6
-                overlap_idx_fit = np.where(
-                    np.abs(
-                        (stress_vM_smooth[-stress_vM_smooth_fit.size:] -
-                         stress_vM_smooth_fit)
-                    ) < OVERLAP_THRESHOLD
-                )[0][-1]
-                overlap_idx = np.where(fit_idx)[0][0] + overlap_idx_fit
+                    OVERLAP_THRESHOLD = 0.01e6
+                    overlap_idx_fit = np.where(
+                        np.abs(
+                            (stress_vM_smooth[-stress_vM_smooth_fit.size:] -
+                            stress_vM_smooth_fit)
+                        ) < OVERLAP_THRESHOLD
+                    )[0][-1]
+                    overlap_idx = np.where(fit_idx)[0][0] + overlap_idx_fit
 
-                truncated_percent = (strain_vM_plastic.size -
-                                     overlap_idx) * 100 / strain_vM_plastic.size
-                print(f'Power law extrapolation: truncating {truncated_percent:.0f}% of input data '
-                      f'to ensure smooth transition to extrapolated data.')
+                    truncated_percent = (strain_vM_plastic.size -
+                                        overlap_idx) * 100 / strain_vM_plastic.size
+                    print(f'Power law extrapolation: truncating {truncated_percent:.0f}% of input data '
+                        f'to ensure smooth transition to extrapolated data.')
 
-                new_strain = np.linspace(
-                    strain_vM_plastic[overlap_idx], extrap_to_strain, 1000)
-                new_stress = hardening_power_law(
-                    new_strain, power_law_K, power_law_exp)
+                    new_strain = np.linspace(strain_vM_plastic[overlap_idx], extrap_to_strain, 1000)
+                    new_stress = hardening_power_law(new_strain, power_law_K, power_law_exp)
 
-                strain_vM_plastic_extrap = np.concatenate(
-                    (strain_vM_plastic[:overlap_idx], new_strain[1:]))
-                stress_vM_smooth_extrap = np.concatenate(
+                    strain_vM_plastic_extrap = np.concatenate(
+                        (strain_vM_plastic[:overlap_idx], new_strain[1:]))
+                    stress_vM_smooth_extrap = np.concatenate(
+                        (stress_vM_smooth[:overlap_idx], new_stress[1:]))                        
                     (stress_vM_smooth[:overlap_idx], new_stress[1:]))
+                        (stress_vM_smooth[:overlap_idx], new_stress[1:]))                        
+                else:
+                    add_strain = np.linspace(strain_vM_plastic[-1], extrap_to_strain, 1000)
+                    add_stress = hardening_power_law(add_strain, power_law_K, power_law_exp)
 
             elif extrap_mode == 'constant_work_hardening_rate':
                 # Assume this number to be the work hardening rate at which to extrapolate
