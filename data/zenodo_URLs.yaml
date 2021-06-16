@@ -30,11 +30,11 @@ modelling_workflows:
             md5: 9ec23c2520d1fa1a6c3ac1cc67c00a99
     estimate_hardening_curves:
         workflow_YAML_spec:
-            url: https://sandbox.zenodo.org/record/836921/files/4_estimate_hardening_curves.yml
-            md5: b77af510acd7193c644b5ddbba25956c
+            url: https://sandbox.zenodo.org/record/865995/files/4_estimate_hardening_curves.yml
+            md5: 00a7914cb940ffdbe986d097222908f3
         workflow_HDF5_file:
-            url: https://sandbox.zenodo.org/record/836921/files/workflow.hdf5
-            md5: 52956b6641d6c2d002af3db47e8c0955
+            url: https://sandbox.zenodo.org/record/865995/files/workflow.hdf5
+            md5: c634f66cdbfb351171797be80de1c99a
     simulate_marciniak_kuczynski:
         workflow_YAML_spec:
             url: https://sandbox.zenodo.org/record/836922/files/MK_analysis.yml
