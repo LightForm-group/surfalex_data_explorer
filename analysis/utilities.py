@@ -75,6 +75,102 @@ class WorkHardeningExplorer:
         return explorer_widgets
 
 
+class FormingLimitExplorer:
+
+    def __init__(self, figure, show_forming_limits_toggle_button,
+                 show_strain_paths_toggle_button, FLC_workflows, show_3D=False):
+        self.figure = figure
+        self.show_forming_limits_toggle_button = show_forming_limits_toggle_button
+        self.show_strain_paths_toggle_button = show_strain_paths_toggle_button
+        self.FLC_workflows = FLC_workflows
+        self.show_3D = show_3D
+
+        self.show_forming_limits_toggle_button.observe(
+            self._on_toggle_forming_limits, 'value')
+        self.show_strain_paths_toggle_button.observe(
+            self._on_toggle_strain_paths, 'value')
+
+    def _on_toggle_forming_limits(self, change):
+
+        visibility = {}
+        for trace in self.figure.data:
+            if trace.name not in visibility or trace.visible in [True, 'legendonly']:
+                visibility.update({trace.name: trace.visible})
+
+        with self.figure.batch_update():
+
+            for trace_idx, trace in enumerate(self.figure.data):
+
+                if trace.meta['type'] in ['forming_limit', 'strain_path']:
+                    showlegend = False
+                else:
+                    showlegend = None
+                visible = None
+
+                if trace.meta['type'] == 'forming_limit':
+                    visible = (
+                        visibility[trace.name] or True) if change['new'] is True else False
+                    showlegend = change['new']
+
+                elif trace.meta['type'] == 'strain_path':
+                    if trace.meta['strain_path_idx'] == 0 and trace.visible:
+                        showlegend = not change['new']
+
+                if showlegend is not None:
+                    trace.showlegend = showlegend
+                if visible is not None:
+                    trace.visible = visible
+
+    def _on_toggle_strain_paths(self, change):
+
+        visibility = {}
+        for trace in self.figure.data:
+            if trace.name not in visibility or trace.visible in [True, 'legendonly']:
+                visibility.update({trace.name: trace.visible})
+
+        with self.figure.batch_update():
+
+            for trace_idx, trace in enumerate(self.figure.data):
+
+                if trace.meta['type'] in ['forming_limit', 'strain_path']:
+                    showlegend = False
+                else:
+                    showlegend = None
+                visible = None
+
+                if trace.meta['type'] == 'forming_limit':
+                    showlegend = not change['new']
+
+                elif trace.meta['type'] == 'strain_path':
+                    visible = (
+                        visibility[trace.name] or True) if change['new'] is True else False
+                    if trace.meta['strain_path_idx'] == 0 and visible:
+                        showlegend = change['new']
+
+                if showlegend is not None:
+                    trace.showlegend = showlegend
+                if visible is not None:
+                    trace.visible = visible
+
+    def show(self):
+        return self.visual
+
+    @property
+    def visual(self):
+        visualiser_widgets = widgets.VBox(
+            children=[
+                widgets.HBox(
+                    children=[
+                        self.show_forming_limits_toggle_button,
+                        self.show_strain_paths_toggle_button,
+                    ]
+                ),
+                self.figure,
+            ]
+        )
+        return visualiser_widgets
+
+
 def get_color(name: str, sample_names: List[str], normed: bool = True) -> tuple:
     """Returns a RGB tuple for the dataset based on its label, using a qualitative color scale."""
     index = sample_names.index(name.split("_")[0])
@@ -1447,3 +1543,264 @@ def plot_static_figure_stress_strain_curves(cropped_voltage_data):
         },
     )
     return fig
+
+
+def visualise_MK_forming_limits(FLC_workflows, show_3D=False, additional_FLCs=None, layout_2D=None,
+                                show_strain_paths=True):
+
+    plt_data_3D = []
+    plt_data_2D = []
+    major_range = [0, 0]
+    minor_range = [0, 0]
+    range_margin = 1.1
+    for FLC_data_idx, FLC_data in enumerate(FLC_workflows):
+        FLC_dict = FLC_data['workflow'].tasks.find_forming_limit_curve.elements[0].outputs.forming_limit_curve
+        name = FLC_data['label']
+        for strain_path_idx, strain_path in enumerate(FLC_dict['strain_paths']):
+            if strain_path['strain'] is not None:
+
+                if min(strain_path['strain'][1]) < major_range[0]:
+                    major_range[0] = min(
+                        strain_path['strain'][1] * range_margin)
+
+                if max(strain_path['strain'][1]) > major_range[1]:
+                    major_range[1] = max(
+                        strain_path['strain'][1] * range_margin)
+
+                if min(strain_path['strain'][0]) < minor_range[0]:
+                    minor_range[0] = min(
+                        strain_path['strain'][0] * range_margin)
+
+                if max(strain_path['strain'][0]) > minor_range[1]:
+                    minor_range[1] = max(
+                        strain_path['strain'][0] * range_margin)
+
+                plt_data_3D.append({
+                    'type': 'scatter3d',
+                    'x': strain_path['strain'][0],
+                    'y': [strain_path['groove_angle_deg']] * strain_path['strain'].shape[1],
+                    'z': strain_path['strain'][1],
+                    'name': name,
+                    'legendgroup': name,
+                    'marker': {
+                        'size': 2,
+                    },
+                    'line': {
+                        'color': qualitative.D3[FLC_data_idx % len(qualitative.D3)],
+                        'width': 0.5,
+                    },
+                    'showlegend': (True if strain_path_idx == 0 else False) if show_strain_paths else False,
+                    'meta': {
+                        'type': 'strain_path',
+                        'strain_path_idx': strain_path_idx,
+                    },
+                    'visible': show_strain_paths,
+                })
+                plt_data_2D.append({
+                    'x': strain_path['strain'][0],
+                    'y': strain_path['strain'][1],
+                    'name': name,
+                    'legendgroup': name,
+                    'marker': {
+                        'size': 2,
+                    },
+                    'line': {
+                        'color': qualitative.D3[FLC_data_idx % len(qualitative.D3)],
+                        'width': 0.5,
+                    },
+                    'showlegend': (True if strain_path_idx == 0 else False) if show_strain_paths else False,
+                    'meta': {
+                        'type': 'strain_path',
+                        'strain_path_idx': strain_path_idx,
+                    },
+                    'visible': show_strain_paths,
+                })
+
+        # Add final forming limit:
+        plt_data_3D.append({
+            'type': 'scatter3d',
+            'x': FLC_dict['forming_limits'][0],
+            'y': FLC_dict['forming_limit_groove_angles_deg'],
+            'z': FLC_dict['forming_limits'][1],
+            'line': {
+                'color': qualitative.D3[FLC_data_idx % len(qualitative.D3)],
+            },
+            'name': name,
+            'legendgroup': name,
+            'showlegend': not show_strain_paths,
+            'visible': True,
+            'meta': {
+                'type': 'forming_limit',
+            },
+        })
+        line_style = FLC_data.get('line', {})
+        marker_style = FLC_data.get('marker', {})
+        plt_data_2D.append({
+            'x': FLC_dict['forming_limits'][0],
+            'y': FLC_dict['forming_limits'][1],
+            'line': {
+                'color': qualitative.D3[FLC_data_idx % len(qualitative.D3)],
+                **line_style,
+            },
+            'marker': marker_style,
+            'name': name,
+            'legendgroup': name,
+            'showlegend': not show_strain_paths,
+            'visible': True,
+            'meta': {
+                'type': 'forming_limit',
+            },
+        })
+
+    for idx, add_FLC in enumerate(additional_FLCs or []):
+        plt_data_2D.append({
+            'x': add_FLC['minor_strain'],
+            'y': add_FLC['major_strain'],
+            'meta': {'type': 'additional_FLC'},
+            'name': add_FLC['name'],
+            'showlegend': True,
+            'visible': True,
+            'legendgroup': add_FLC['name'],
+            'mode': add_FLC.get('mode', 'markers'),
+            'marker': add_FLC.get('marker', {}),
+            'line': {
+                'color': qualitative.D3[(len(FLC_workflows) + idx) % len(qualitative.D3)],
+            },
+        })
+        plt_data_3D.append({
+            'type': 'scatter3d',
+            'x': add_FLC['minor_strain'],
+            'y': [0] * len(add_FLC['minor_strain']),
+            'z': add_FLC['major_strain'],
+            'meta': {'type': 'additional_FLC'},
+            'name': add_FLC['name'],
+            'showlegend': True,
+            'visible': True,
+            'legendgroup': add_FLC['name'],
+            'mode': add_FLC.get('mode', 'markers'),
+            'marker': add_FLC.get('marker', {}),
+            'line': {
+                'color': qualitative.D3[(len(FLC_workflows) + idx) % len(qualitative.D3)],
+            },
+        })
+
+    layout_3D = {
+        'height': 900,
+        'scene': {
+            'xaxis': {
+                'title': 'Minor strain',
+            },
+            'yaxis': {
+                'title': 'Groove angle (deg.)',
+                'dtick': 15,
+            },
+            'zaxis': {
+                'title': 'Major strain',
+            },
+            'camera': {
+                'center': {'x': 0, 'y': 0, 'z': 0},
+                'eye': {'x': 0.4, 'y': -2.0, 'z': 0.3},
+                'projection': {'type': 'orthographic'},
+            }
+        }
+    }
+    layout_2D = {
+        'height': 800,
+        'xaxis': {
+            'title': 'Minor strain',
+            'range': [i * range_margin for i in minor_range],
+        },
+        'yaxis': {
+            'title': 'Major strain',
+            'scaleanchor': 'x',
+            'range': [i * range_margin for i in major_range]
+        },
+        **(layout_2D or {}),
+    }
+
+    fig_3D = graph_objects.FigureWidget(data=plt_data_3D, layout=layout_3D)
+    fig_2D = graph_objects.FigureWidget(data=plt_data_2D, layout=layout_2D)
+
+    fig = fig_3D if show_3D else fig_2D
+    show_forming_limits_toggle_button = widgets.ToggleButton(
+        description='Show forming limits', value=True)
+    show_strain_paths_toggle_button = widgets.ToggleButton(
+        description='Show strain paths', value=show_strain_paths)
+
+    explorer = FormingLimitExplorer(
+        figure=fig,
+        show_forming_limits_toggle_button=show_forming_limits_toggle_button,
+        show_strain_paths_toggle_button=show_strain_paths_toggle_button,
+        FLC_workflows=FLC_workflows,
+    )
+
+    return explorer
+
+
+def identify_strain_path(displacement_BCs):
+    # Assuming +/- displacement BCs are symmetric along a given axis
+    # [x, x, y, y]
+
+    strain_path = ''
+    if displacement_BCs[2] == 'free' and displacement_BCs[3] == 'free':
+        return 'Uniaxial'
+
+    major_BC_abs = abs(displacement_BCs[0]) + abs(displacement_BCs[1])
+    minor_BC_abs = abs(displacement_BCs[2]) + abs(displacement_BCs[3])
+
+    if np.isclose(minor_BC_abs, 0):
+        strain_path = 'Plane strain'
+
+    elif major_BC_abs == minor_BC_abs:
+        strain_path = 'Biaxial: ε_min = ε_maj'
+
+    else:
+        strain_path = f'Biaxial: ε_min = {major_BC_abs/minor_BC_abs:.2f} ε_maj'
+
+    return strain_path
+
+
+def plot_static_figure_full_FLC(FLC_workflows, additional_FLCs):
+
+    layout = {
+        'width': 350,
+        'height': 350,
+        'margin': {'t': 20, 'b': 20, 'l': 20, 'r': 20},
+        'template': 'simple_white',
+        'xaxis': {
+            'mirror': 'ticks',
+            'ticks': 'inside',
+            'range': [-0.2, 0.5],
+            'title': r'Minor strain, \minorStrain{}',
+            'dtick': 0.1,
+            'tickformat': '.1f',
+            'showgrid': True,
+        },
+        'yaxis': {
+            'mirror': 'ticks',
+            'ticks': 'inside',
+            'range': [0.05, 0.75],
+            'title': r'Major strain, \majorStrain{}',
+            'dtick': 0.1,
+            'tickformat': '.1f',
+            'showgrid': True,
+            'scaleanchor': 'x',
+        },
+        'legend': {
+            'x': 0.98,
+            'xanchor': 'right',
+            'y': 0.98,
+            'yanchor': 'top',
+            'tracegroupgap': 0,
+            'bgcolor': 'rgb(250, 250, 250)',
+        }
+    }
+    forming_limit_explorer = visualise_MK_forming_limits(
+        FLC_workflows,
+        show_3D=False,
+        additional_FLCs=additional_FLCs,
+        layout_2D=layout,
+        show_strain_paths=False,
+    )
+
+    return forming_limit_explorer.figure
