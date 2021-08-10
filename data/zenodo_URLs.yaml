@@ -1,65 +1,142 @@
 tensile_tests:
     url: https://zenodo.org/record/4926424/files/tensile_tests.zip
-    md5: cdcefdfb8f70bf40ec5ae8b8144ac9d2  
+    md5: cdcefdfb8f70bf40ec5ae8b8144ac9d2
     name: tensile_tests.zip
 nakazima_tests:
     url: https://zenodo.org/record/4926357/files/nakazima.zip
-    md5: 5606b4f466cd71615634e56ff32d804f    
+    md5: 5606b4f466cd71615634e56ff32d804f
     name: nakazima.zip
 modelling_workflows:
     make_volume_element:
         workflow_YAML_spec:
-            url: https://sandbox.zenodo.org/record/836840/files/1_make_volume_element.yml
+            url: https://sandbox.zenodo.org/record/896774/files/1_make_volume_element.yml?download=1
             md5: ddc4e46fad5a9e265b351e8f446f1cd8
         workflow_HDF5_file:
-            url: https://sandbox.zenodo.org/record/836840/files/workflow.hdf5
+            url: https://sandbox.zenodo.org/record/896774/files/workflow.hdf5?download=1
             md5: 7cd57bef40d02afcbaeea04750e31159
     fit_single_crystal_parameters:
         workflow_YAML_spec:
-            url: https://sandbox.zenodo.org/record/836911/files/2_fit_single_crystal_parameters.yml
+            url: https://sandbox.zenodo.org/record/896778/files/2_fit_single_crystal_parameters.yml?download=1
             md5: b5029c0b6de4014e7c6a077a3f9f3542
         workflow_HDF5_file:
-            url: https://sandbox.zenodo.org/record/836911/files/workflow.hdf5
+            url: https://sandbox.zenodo.org/record/896778/files/workflow.hdf5?download=1
             md5: 086ce35522510db7fc0649178800dce2
     fit_yield_functions:
         workflow_YAML_spec:
-            url: https://sandbox.zenodo.org/record/836918/files/3_fit_yield_functions.yml
+            url: https://sandbox.zenodo.org/record/896782/files/3_fit_yield_functions.yml?download=1
             md5: a039158dd22226ccfd257df9a8796b41
         workflow_HDF5_file:
-            url: https://sandbox.zenodo.org/record/836918/files/workflow.hdf5
+            url: https://sandbox.zenodo.org/record/896782/files/workflow.hdf5?download=1
             md5: 9ec23c2520d1fa1a6c3ac1cc67c00a99
     estimate_hardening_curves:
         workflow_YAML_spec:
-            url: https://sandbox.zenodo.org/record/865995/files/4_estimate_hardening_curves.yml
+            url: https://sandbox.zenodo.org/record/896784/files/4_estimate_hardening_curves.yml?download=1
             md5: 00a7914cb940ffdbe986d097222908f3
         workflow_HDF5_file:
-            url: https://sandbox.zenodo.org/record/865995/files/workflow.hdf5
+            url: https://sandbox.zenodo.org/record/896784/files/workflow.hdf5?download=1
             md5: c634f66cdbfb351171797be80de1c99a
-    simulate_marciniak_kuczynski:
+    simulate_marciniak_kuczynski_A:
         workflow_YAML_spec:
-            url: https://sandbox.zenodo.org/record/836922/files/MK_analysis.yml
-            md5: 5b0ec60914cdf201e282d93bd90eee52
+            url: https://sandbox.zenodo.org/record/896786/files/5A_simulate_marciniak_kuczynski.yml?download=1
+            md5: b2137344db2f66c2e84c45d39a2cc14a
         workflow_HDF5_file:
-            url: https://sandbox.zenodo.org/record/836922/files/workflow.hdf5
-            md5: 53bc248bfdfef431722fc1a8b8a66ad7
+            url: https://sandbox.zenodo.org/record/896786/files/5A_workflow.hdf5?download=1
+            md5: 35b31d04166631aaa2e1df1e0f7ccbd9
+    simulate_marciniak_kuczynski_B:
+        workflow_YAML_spec:
+            url: https://sandbox.zenodo.org/record/896786/files/5B_simulate_marciniak_kuczynski.yml?download=1
+            md5: 85b3f46fce963c050faaf25c64085d03
+        workflow_HDF5_file:
+            url: https://sandbox.zenodo.org/record/896786/files/5B_workflow.hdf5?download=1
+            md5: fb6d568475eb784581b0dbb88feeac51
+    simulate_marciniak_kuczynski_C:
+        workflow_YAML_spec:
+            url: https://sandbox.zenodo.org/record/896786/files/5C_simulate_marciniak_kuczynski.yml?download=1
+            md5: 840263dbe10b00c1e8f017d9318a59b6
+        workflow_HDF5_file:
+            url: https://sandbox.zenodo.org/record/896786/files/5C_workflow.hdf5?download=1
+            md5: 145c55a4999b8bb0f7945ce53f3b1968
+    simulate_marciniak_kuczynski_D:
+        workflow_YAML_spec:
+            url: https://sandbox.zenodo.org/record/896786/files/5D_simulate_marciniak_kuczynski.yml?download=1
+            md5: c328e2a1a3a7811ebcbaffe992c6c9ee
+        workflow_HDF5_file:
+            url: https://sandbox.zenodo.org/record/896786/files/5D_workflow.hdf5?download=1
+            md5: 3ebc648b55569631d0b4cead49443c09
+    simulate_marciniak_kuczynski_E:
+        workflow_YAML_spec:
+            url: https://sandbox.zenodo.org/record/896786/files/5E_simulate_marciniak_kuczynski.yml?download=1
+            md5: 8152723c568285b70f20ab9723c7957d
+        workflow_HDF5_file:
+            url: https://sandbox.zenodo.org/record/896786/files/5E_workflow.hdf5?download=1
+            md5: 45b7e34dbc618855115742dc797bb4fa
+    simulate_marciniak_kuczynski_F:
+        workflow_YAML_spec:
+            url: https://sandbox.zenodo.org/record/896786/files/5F_simulate_marciniak_kuczynski.yml?download=1
+            md5: af589dc1036ab884271f0c5d0ecc39e2
+        workflow_HDF5_file:
+            url: https://sandbox.zenodo.org/record/896786/files/5F_workflow.hdf5?download=1
+            md5: 8bb9d58565e0ccfff1c615ed60b7f2f6
+    simulate_marciniak_kuczynski_G:
+        workflow_YAML_spec:
+            url: https://sandbox.zenodo.org/record/896786/files/5G_simulate_marciniak_kuczynski.yml?download=1
+            md5: b68b0a0e254adf284f83a78b5b621d2e
+        workflow_HDF5_file:
+            url: https://sandbox.zenodo.org/record/896786/files/5G_workflow.hdf5?download=1
+            md5: 8fd3ee2b42ae367c925c6d59f58db9c9
+    simulate_marciniak_kuczynski_H:
+        workflow_YAML_spec:
+            url: https://sandbox.zenodo.org/record/896786/files/5H_simulate_marciniak_kuczynski.yml?download=1
+            md5: f3ac7a42169a8c515f09e215a5d4c69a
+        workflow_HDF5_file:
+            url: https://sandbox.zenodo.org/record/896786/files/5H_workflow.hdf5?download=1
+            md5: 489bbeafbfa69140553cc382f921cc99
+    simulate_marciniak_kuczynski_I:
+        workflow_YAML_spec:
+            url: https://sandbox.zenodo.org/record/896786/files/5I_simulate_marciniak_kuczynski.yml?download=1
+            md5: fb9380231d3ca24c2860d6a26886ec4f
+        workflow_HDF5_file:
+            url: https://sandbox.zenodo.org/record/896786/files/5I_workflow.hdf5?download=1
+            md5: 70d00185ff9ea04ddf35be976164986d
+    simulate_marciniak_kuczynski_J:
+        workflow_YAML_spec:
+            url: https://sandbox.zenodo.org/record/896786/files/5J_simulate_marciniak_kuczynski.yml?download=1
+            md5: 639539547bd2ebdce0565365586ebc46
+        workflow_HDF5_file:
+            url: https://sandbox.zenodo.org/record/896786/files/5J_workflow.hdf5?download=1
+            md5: f6d534caad05e724b571800d7b5c990c
+    simulate_marciniak_kuczynski_K:
+        workflow_YAML_spec:
+            url: https://sandbox.zenodo.org/record/896786/files/5K_simulate_marciniak_kuczynski.yml?download=1
+            md5: 06c4b5429719d4718f67abdb2ba337a7
+        workflow_HDF5_file:
+            url: https://sandbox.zenodo.org/record/896786/files/5K_workflow.hdf5?download=1
+            md5: dd1e56e0b6e891c9036fc6340f202178
+    simulate_marciniak_kuczynski_L:
+        workflow_YAML_spec:
+            url: https://sandbox.zenodo.org/record/896786/files/5L_simulate_marciniak_kuczynski.yml?download=1
+            md5: 8b2a49536e9f2896b306b53475313065
+        workflow_HDF5_file:
+            url: https://sandbox.zenodo.org/record/896786/files/5L_workflow.hdf5?download=1
+            md5: 352da3f9136be3b1793adb96494b43e8
     generate_random_RVE:
         workflow_YAML_spec:
-            url: https://sandbox.zenodo.org/record/856127/files/6_make_random_RVE.yml
-            md5: 0aa9ff88a498f1723b4f3b6a34073a1f 
+            url: https://sandbox.zenodo.org/record/896805/files/6_make_random_RVE.yml?download=1
+            md5: 0aa9ff88a498f1723b4f3b6a34073a1f
         workflow_HDF5_file:
-            url: https://sandbox.zenodo.org/record/856127/files/workflow.hdf5
+            url: https://sandbox.zenodo.org/record/896805/files/workflow.hdf5?download=1
             md5: dd01b204df511fba6501aa9c96e8776a
-    simulate_uniaxial_tension_surfalex:
+    simulate_uniaxial_tension_A:
         workflow_YAML_spec:
-            url: https://sandbox.zenodo.org/record/856129/files/7A_simulate_uniaxial_tension.yml
+            url: https://sandbox.zenodo.org/record/896807/files/7A_simulate_uniaxial_tension.yml?download=1
             md5: 08b738c2f8c4ee3205e87ee5fdb8fdbd
         workflow_HDF5_file:
-            url: https://sandbox.zenodo.org/record/856129/files/workflow.hdf5
+            url: https://sandbox.zenodo.org/record/896807/files/7A_workflow.hdf5?download=1
             md5: 891fb854bffb91c36d97fc33d30e53cf
-    simulate_uniaxial_tension_random:
+    simulate_uniaxial_tension_B:
         workflow_YAML_spec:
-            url: https://sandbox.zenodo.org/record/856131/files/7B_simulate_uniaxial_tension.yml
+            url: https://sandbox.zenodo.org/record/896807/files/7B_simulate_uniaxial_tension.yml?download=1
             md5: 49d651bc4ca115297c092056b15a69df
         workflow_HDF5_file:
-            url: https://sandbox.zenodo.org/record/856131/files/workflow.hdf5
+            url: https://sandbox.zenodo.org/record/896807/files/7B_workflow.hdf5?download=1
             md5: b165b24d3236c94fff249a44b5e2cdc3
