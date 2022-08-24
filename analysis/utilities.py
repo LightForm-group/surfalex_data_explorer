@@ -468,9 +468,11 @@ def collect_hardening_data(sim_tasks, yield_stress, extrapolations=None,
     hardening_data = {}
     for strain_path, sim_task in sim_tasks.items():
         vol_elem_response = sim_task.elements[0].outputs.volume_element_response
-        strain_vM_total = vol_elem_response['vol_avg_equivalent_strain']['data']
-        strain_vM_plastic = vol_elem_response['vol_avg_equivalent_plastic_strain']['data']
-        stress_vM = vol_elem_response['vol_avg_equivalent_stress']['data']
+
+        vol_data = vol_elem_response['volume_data']
+        strain_vM_total = get_von_mises_strain(vol_data['vol_avg_strain']['data'])
+        strain_vM_plastic = get_von_mises_strain(vol_data['vol_avg_plastic_strain']['data'])
+        stress_vM = get_von_mises_stress(vol_data['vol_avg_stress']['data'])
 
         # Smooth oscillations in stress for higher strains:
         smooth_idx = np.where(strain_vM_total > 0.15)[0][0]
@@ -593,6 +595,11 @@ def collect_hardening_data(sim_tasks, yield_stress, extrapolations=None,
 
             work_hardening_rate = np.gradient(
                 stress_vM_smooth_extrap, strain_vM_plastic_extrap)
+
+            # Truncate large/noisy work_hardening_rate values at the start:
+            wh_max_too_large_idx = np.max(np.where([work_hardening_rate > 1e+14])[1])
+            wh_set_to_max_idx = np.arange(0, wh_max_too_large_idx + 1)
+            work_hardening_rate[wh_set_to_max_idx] = 1e+14
 
             # Skip transition point to smoothed data:
             work_hardening_rate = np.concatenate((
@@ -884,7 +891,7 @@ def show_work_hardening(hardening_data, layout_args=None):
             'dtick': 0.1,
             'tickformat': '.1f',
             'title': {
-                'text': r'Von Mises true strain, \strainVM{{}}',
+                'text': r'Von Mises true plastic strain',
                 'font': {
                     'size': 12,
                 },
@@ -896,7 +903,7 @@ def show_work_hardening(hardening_data, layout_args=None):
             'ticks': 'inside',
             'range': [0, 330],
             'title': {
-                'text': r'Von Mises true stress, \stressVM{} (\MPa{})',
+                'text': r'Von Mises true stress (MPa)',
                 'font': {
                     'size': 12,
                 },
@@ -917,7 +924,7 @@ def show_work_hardening(hardening_data, layout_args=None):
             'ticks': 'inside',
         },
         'legend': {
-            'x': 0.80,
+            'x': 0.83,
             'y': 0.5,
             'xanchor': 'right',
             'yanchor': 'middle',
@@ -932,6 +939,112 @@ def show_work_hardening(hardening_data, layout_args=None):
 
     return fig
 
+def show_axial_stress_strain_curves(hardening_curve_tasks, layout_args=None):
+    layout_args = layout_args or {}
+    plt_data = []
+    for strain_path_idx, (strain_path, task) in enumerate(hardening_curve_tasks.items()):
+
+        vol_data = task.elements[0].outputs.volume_element_response['volume_data']
+        stress = vol_data['vol_avg_stress']['data'][:, 0, 0]
+        strain = vol_data['vol_avg_strain']['data'][:, 0, 0]
+        legend_data = {
+            'name': STRAIN_PATH_LEGEND_NAMES[strain_path],
+            'legendgroup': STRAIN_PATH_LEGEND_NAMES[strain_path],
+        }    
+
+        smooth_idx = np.where(strain > 0.081)[0][0]
+        lowess_out = lowess(stress, strain, is_sorted=True, frac=0.025, it=0, return_sorted=False)
+        stress_smooth = np.concatenate((stress[:smooth_idx], lowess_out[smooth_idx:]))
+        work_hardening_rate = np.gradient(stress_smooth, strain)
+
+        plt_data.extend([
+            {
+                'x': strain,
+                'y': stress / 1e6,
+                'xaxis': 'x1',
+                'yaxis': 'y1',
+                'text': np.arange(stress.size),
+                'line': {
+                    'width': 1,
+                    'color': qualitative.D3[strain_path_idx],
+                },
+                'showlegend': True,
+                **legend_data,
+            },
+            {
+                'x': strain,
+                'y': work_hardening_rate / 1e9,
+                'xaxis': 'x1',
+                'yaxis': 'y2',
+                'text': np.arange(work_hardening_rate.size),
+                'line': {
+                    'width': 1,
+                    'color': qualitative.D3[strain_path_idx],
+                    'dash': 'dot',
+                },
+                'showlegend': False,
+                **legend_data,
+            },
+        ])
+    layout = {
+        'width': 400,
+        'height': 350,
+        'margin': {'t': 20, 'b': 20, 'l': 20, 'r': 20},
+        'template': 'simple_white',
+        'xaxis': {
+            'range': [-0.01, 0.26],
+            'mirror': 'ticks',
+            'ticks': 'inside',
+            'dtick': 0.05,
+            'tickformat': '.2f',
+            'title': {
+                'text': r'Axial strain',
+                'font': {
+                    'size': 12,
+                },
+            },
+
+        },
+        'yaxis': {
+            'anchor': 'x',
+            'ticks': 'inside',
+            'range': [0, 350],
+            'title': {
+                'text': r'Axial stress (\MPa{})',
+                'font': {
+                    'size': 12,
+                },
+            },
+        },
+        'yaxis2': {
+            'anchor': 'x',
+            'side': 'right',
+            'overlaying': 'y',
+            'tickformat': '.1f',
+            'title': {
+                'text': r'Axial work hardening rate (\GPa{})',
+                'font': {
+                    'size': 12,
+                },
+            },
+            'range': [0, 2.5],
+            'ticks': 'inside',
+        },        
+        'legend': {
+            'x': 0.9,
+            'y': 0.47,
+            'xanchor': 'right',
+            'yanchor': 'middle',
+            'tracegroupgap': 0,
+        },
+        **layout_args,
+    }
+    fig = graph_objects.FigureWidget(
+        data=plt_data,
+        layout=layout
+    )
+
+    return fig
 
 def prepare_plastic_tables(hardening_data):
     """Generate some Dataframes of the plastic tables."""
@@ -1808,3 +1921,49 @@ def plot_static_figure_full_FLC(FLC_workflows, additional_FLCs):
     )
 
     return forming_limit_explorer.figure
+
+def get_hydrostatic_tensor(tensor):
+    """Returns the hydrostatic tensor from an input stress strain tensor
+
+    Parameters
+    ----------
+    tensor : ndarray of shape array (..., 3, 3)
+
+    Returns
+    -------
+    (..., 3, 3) array hydrostatic stress on the diagonal of tensor with 0 in shear values
+
+    """
+
+    hydro = np.zeros(tensor.shape)
+    hydro[..., [0, 1, 2], [0, 1, 2]] =  (np.trace(tensor, axis1=-2, axis2=-1) / 3)[..., None]
+    return hydro
+
+
+def get_von_mises(s, tensor):
+    """Returns the equivalent value of stress or strain tensor
+
+    Parameters
+    ----------
+    tensor : ndarray of shape (..., 3, 3)
+        Tensor of which to get the von Mises equivalent.
+    s : float
+        Scaling factor: 3/2 for stress, 2/3 for strain.
+
+    Returns
+    -------
+    Von Mises equivalent value of tensor.
+
+    """
+
+    deviatoric = tensor - get_hydrostatic_tensor(tensor)
+
+    return np.sqrt(s * np.sum(deviatoric**2.0, axis=(-2, -1)))
+
+
+def get_von_mises_stress(stress):
+    return get_von_mises(3 / 2, stress)
+
+
+def get_von_mises_strain(strain):
+    return get_von_mises(2 / 3, strain)
