@@ -11,6 +11,7 @@ import yaml
 import pandas as pd
 from plotly import graph_objects
 from plotly.colors import DEFAULT_PLOTLY_COLORS, qualitative, convert_colors_to_same_type
+from plotly.subplots import make_subplots
 from ipywidgets import widgets
 from IPython.display import display
 from formable.yielding import YieldFunction
@@ -443,8 +444,17 @@ def show_all_fitted_yield_function_parameters(all_load_responses):
 
     tab_children = []
     tab_titles = []
+    as_arrays = []
     for yld_func_name, fitted_vals in all_fitted_params.items():
         df = pd.DataFrame(fitted_vals)
+        dfi = df.loc[:, df.columns != 'equivalent_stress']
+        dfi = dfi.loc[:, dfi.columns != 'yield_point']
+        as_arrays.append({
+            'name': yld_func_name,
+            'parameter_names': np.array(dfi.columns),
+            'yield_points': np.array(df.yield_point),
+            'values': np.array(np.array(dfi)),
+        })
         out_widget = widgets.Output()
         tab_children.append(out_widget)
         tab_titles.append(yld_func_name)
@@ -456,8 +466,52 @@ def show_all_fitted_yield_function_parameters(all_load_responses):
     for i in range(len(tab_titles)):
         tab.set_title(i, tab_titles[i])
     display(tab)
-    return all_fitted_params
+    return all_fitted_params, as_arrays
 
+def plot_all_fitted_parameters(fitted_param_arrays):
+    split_viz = {
+        'Hill1948': ['L', 'M', 'N'],
+        'Barlat_Yld91': ['exponent'],
+        'Barlat_Yld2004_18p': ['exponent'],
+    }
+    for i in fitted_param_arrays:
+        if i['parameter_names'].size:
+            name = i['name']        
+            if name in split_viz:
+                num_cols = 2
+                right_dat_idx = [list(i['parameter_names']).index(j) for j in split_viz[name]]
+                left_dat_idx = [j for j in range(len(i['parameter_names'])) if j not in right_dat_idx]
+                col_widths = [len(left_dat_idx) / len(i['parameter_names']), len(right_dat_idx) / len(i['parameter_names'])]
+            else:
+                num_cols = 1
+                left_dat_idx = list(range(len['parameter_names']))
+                right_dat_idx = None
+                col_widths = [1]
+            
+            fig = make_subplots(rows=1, cols=num_cols, column_widths=col_widths, horizontal_spacing=0.20)
+            fig.add_heatmap(
+                z=i['values'][:, np.array(left_dat_idx)],
+                x=[i['parameter_names'][j] for j in left_dat_idx],
+                y=i['yield_points'],
+                colorscale='viridis', 
+                colorbar_x=col_widths[0] * 0.80,
+                colorbar_thickness=20,
+                colorbar_tickformat='.2f',
+            )
+            if name in split_viz:
+                fig.add_heatmap(
+                    z=i['values'][:, np.array(right_dat_idx)],
+                    x=[i['parameter_names'][j] for j in right_dat_idx],
+                    y=i['yield_points'],
+                    row=1,
+                    col=2,
+                    colorscale='viridis',
+                    colorbar_thickness=20,
+                    colorbar_tickformat='.2f',
+                )
+            fig.layout.width = 800
+            fig.layout.title = f"{name} fitted parameters for each yield point"
+            fig.show()
 
 def collect_hardening_data(sim_tasks, yield_stress, extrapolations=None,
                            plastic_table_strain_interval=2e-3):
@@ -1564,11 +1618,18 @@ def get_strain_ratios(vol_avg_def_grad, sheet_dirs=None):
     return out
 
 
-def get_simulated_lankford_parameter(workflow):
+def get_simulated_lankford_parameter(workflow, new=False):
 
     sim_elem = workflow.tasks.simulate_volume_element_loading.elements[0]
-    vol_avg_def_grad = sim_elem.outputs.volume_element_response['vol_avg_def_grad']['data']
-    true_strain = sim_elem.outputs.volume_element_response['vol_avg_equivalent_strain']['data']
+    if new:        
+        vol_avg_def_grad = sim_elem.outputs.volume_element_response['volume_data']['vol_avg_def_grad']['data']
+        true_strain = get_von_mises_strain(
+            sim_elem.outputs.volume_element_response['volume_data']['vol_avg_strain']['data']
+        )
+    else:        
+        vol_avg_def_grad = sim_elem.outputs.volume_element_response['vol_avg_def_grad']['data']
+        true_strain = sim_elem.outputs.volume_element_response['vol_avg_equivalent_strain']['data']
+    
     lankford = get_strain_ratios(vol_avg_def_grad)['lankford']
 
     return (true_strain, lankford)
