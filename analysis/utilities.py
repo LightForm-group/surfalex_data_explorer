@@ -287,13 +287,13 @@ def plot_static_figure_single_crystal_fitting(lm_fitter):
                 'width': 1,
                 'color': DEFAULT_PLOTLY_COLORS[1],
             },
-            'name': 'Sim. initial iter.',
+            'name': 'Sim.\ initial iter.',
         },
         {
             'x': lm_fitter.optimisations[-1].get_sim_strain(0),
             'y': lm_fitter.optimisations[-1].get_sim_stress(0) / 1e6,
             'mode': 'lines',
-            'name': 'Sim. final iter.',
+            'name': 'Sim.\ final iter.',
             'line': {
                 'width': 1,
                 'color': DEFAULT_PLOTLY_COLORS[1],
