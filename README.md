@@ -1,6 +1,6 @@
 # Surfalex data explorer
 
-This repository contains interactive analysis to supplement our manuscript : '***A novel integrated framework for reproducible formability predictions using virtual materials testing***', *A. J. Plowman, P. Jedrasiak, T. Jailin, P. Crowther, S. Mishra, P. Shanthraj, J. Quinta da Fonseca*, in preparation.
+This repository contains interactive analysis to supplement our manuscript : '***A novel integrated framework for reproducible formability predictions using virtual materials testing***', *A. J. Plowman, P. Jedrasiak, T. Jailin, P. Crowther, S. Mishra, P. Shanthraj, J. Quinta da Fonseca*, submitted to Materials Open Research.
 
 The manuscript describes the development of a new computational framework for formability studies, [MatFlow](https://github.com/LightForm-group/matflow). We apply this framework to study the formability of the Surfalex HF (AA6016A) alloy.
 
