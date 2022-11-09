@@ -8,7 +8,7 @@ In this repository, we include Jupyter notebooks that can be used to interactive
 
 ## Getting started
 
-To run the Jupyter notebooks, clone this repository, then activate a new Python 3 virtual environment from the root of the cloned repository with:
+To run the Jupyter notebooks, clone this repository, then activate a new Python 3 virtual environment (tested on Python 3.8) from the root of the cloned repository with:
 
 `python -m venv venv`
 
